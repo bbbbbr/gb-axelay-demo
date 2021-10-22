@@ -7,11 +7,6 @@
 
 #include "map.h"
 
-extern const uint8_t scy_horizon_offsets[];
-extern const uint8_t * p_scy_horizon_offsets;
-
-void map_isr_enable(void);
-
 
 void init_gfx(void) {
 
@@ -29,21 +24,40 @@ void init_gfx(void) {
 
 
 uint8_t map_y = 0;
+uint8_t map_x = 1;
+
+// For now Scroll X amount needs to be +2 and init value of 1
+// so that it avoids some PPU behavior that's different when SCX % 8 = 0
+#define SCROLL_X_AMOUNT 2u
+#define SCROLL_Y_AMOUNT 1u
 
 void main() {
 
     init_gfx();
 
-    p_scy_horizon_offsets = scy_horizon_offsets;
     map_isr_enable();
 
     while (1) {
         wait_vbl_done();
         // Reset scy offset pointer at start of frame
         // TODO: move into Vblank ISR/etc
+
+        SCX_REG = map_x;
         SCY_REG = map_y;
-        if (sys_time & 0x01u)
-            map_y--;
-        p_scy_horizon_offsets = scy_horizon_offsets;
+
+        if (KEY_PRESSED(J_LEFT))
+            map_x -= SCROLL_X_AMOUNT;
+        else if (KEY_PRESSED(J_RIGHT))
+            map_x += SCROLL_X_AMOUNT;
+
+        if (KEY_PRESSED(J_UP))
+            map_y -= SCROLL_Y_AMOUNT;
+        else if (KEY_PRESSED(J_DOWN))
+            map_y += SCROLL_Y_AMOUNT;
+
+        // if (sys_time & 0x01u)
+        //     map_y--;
+
+        UPDATE_KEYS();
     }
 }
