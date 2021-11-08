@@ -28,11 +28,6 @@ void init_gfx(void) {
     DISPLAY_ON;
 }
 
-
-uint8_t map_y = 0;
-uint8_t map_x = 0;
-uint8_t map_x_top = 0;
-
 // For now Scroll X amount needs to be +2 and init value of 1
 // so that it avoids some PPU behavior that's different when SCX % 8 = 0
 #define SCROLL_X_AMOUNT 2u

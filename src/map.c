@@ -4,24 +4,16 @@
 
 #include <gb/isr.h>
 
-extern uint8_t map_x, map_y;
-extern uint8_t map_x_top;
 
-// How to...
-//
-// * Efficiently turn on the HBlank ISR part way down the frame
-//   -  while still having a fixed ISR jump
-//      - and without having a LYC vs HBlank test every time the ISR fires?
-//        - Could have a massive VBlank ISR at the start of the frame that
-//          doesn't exit until around the expected line?
-
+uint8_t map_y = 0;
+uint8_t map_x = 0;
+uint8_t map_x_top = 0;
 
 // Start of New Frame
 //
 // 1. VBlank:            Reset Map for Top screen area,      Use Alt  BG Map, LY Interrupt: ON, HBlank Int: OFF
 // 2. LY Interrupt:      Reset Map for BG Scrolling/Warping, Use Main BG Map, LY Interrupt: OFF, HBlank Int: ON
 // 3. HBlank Interrupts: Update Map BG Y Scroll from LUT
-
 
 
 // One offset per scanline, added to SCY value of preceding line
@@ -37,22 +29,12 @@ const uint8_t __at(0x7E00) scy_horizon_offsets[] = {
     // 1. Not Bad, but not prounoucned enough, sort of 45 degree view
     //  0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, -1, 0, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, -1, 0, -1, 0, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, -1, 0, -1, 0, -1, 0, -1, 0, -1, -1, 0, -1, 0, -1, 0, -1, -1
 
-    // 2. Near opposite of what is wanted, but wrong at the top
-    // 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, -1, -1, -1, -1, 0, -1, -1, 0, -1, -1, 0, -1, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, 0, -1, 0, -1, 0, 0, -1, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 
-
-    // 3. It's sort of closer, but wrong at the top and upside down
-    // 0, -3, -3, -2, -3, -2, -3, -2, -3, -3, -2, -3, -2, -3, -2, -3, -2, -3, -3, -2, -3, -2, -3, -2, -3, -2, -3, -2, -3, -2, -3, -2, -3, -2, -3, -2, -3, -2, -2, -3, -2, -3, -2, -3, -2, -2, -3, -2, -2, -3, -2, -2, -3, -2, -2, -3, -2, -2, -3, -2, -2, -2, -3, -2, -2, -2, -2, -2, -3, -2, -2, -2, -2, -2, -2, -2, -2, -3, -2, -2, -2, -2, -2, -2, -1, -2, -2, -2, -2, -2, -2, -2, -2, -1, -2, -2, -2, -2, -1, -2, -2, -2, -1, -2, -2, -1, -2, -1, -2, -2, -1, -2, -1, -2, -1, -2, -1, -2, -1, -2, -1, -1, -2, -1, -1, -2, -1, -1, -2, -1, -1, -1, -1, -2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 
-
-    // 4. A little better, but wrong at the top still
-    // 0, 1, 2, 2, 1, 2, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 1, 2, 1, 2, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 1, 2, 1, 2, 1, 1, 2, 1, 1, 2, 1, 1, 2, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, -1, 0, -1, 0, -1, -1, 0, -1, -1, 0, -1, -1, -1, -1, -1, -1, -1, -1, 
-
     // 5. Closer, but maybe overdone
     //0, 15, 6, 5, 3, 3, 2, 3, 2, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, -1, 0, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, -1, 0, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, -1, 0, -1, -1, 0, -1, 0, -1, -1, 0, -1, -1, -1, 0, -1, -1, 0, -1, -1, -1, 0, -1, -1, -1, 0, -1, -1, -1, -1, -1, 0, -1, -1, -1, -1, -1, -1, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 
 
 
-// Padding for initial non-warped area????  (TODO: remove and fix code to not require?)
-
 // TODO: compress this so that bottom area stretches more to compensate for non-fullscreen
+// Maybe a larger compressed horizon area at the top, and a more severe spill over
 
     // Merged from #5 & #1 together (5 at start, 1 at end), *** Plus dropping first entry in #5 ***
     15, 6, 5, 3, 3, 2, 3, 2, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 0,
@@ -61,21 +43,18 @@ const uint8_t __at(0x7E00) scy_horizon_offsets[] = {
 };
 
 
-#define WARPED_AREA_START_Y 32
-
-// TODO: would it be better to swap out some variable and then do a reset jump?
+#define WARPED_AREA_START_Y (32 - 1) // One line before desired start line
 
 // LYC and HBlank scanline STAT handler
 // * First Scanline :
 //   - Starts at line WARPED_AREA_START_Y
-//   - Load new SCY_REG starting value for map
-//     - Adjust based on offset from top of screen
+//   - Load new Scroll Y start value for map with offset
 //   - STAT_REG
 //     - Turn *ON* HBlank interrupt
 //     - Turn *OFF** LYC interrupt
 //
-// * Map Scrolling Area: Per Scanline
-//   - Apply SCY offset based on LY based LUT
+// * Map Scrolling Area: Per Scanline compress/stretch effect
+//   - Apply SCY offsets based on LY based LUT
 void map_stat_isr(void) __interrupt __naked {
     __asm \
 
@@ -107,26 +86,42 @@ void map_stat_isr(void) __interrupt __naked {
     // Do some setup on first scanline of the warped region
     // This only gets called *ONCE* per frame
     //
-// FIXME: this is getting called twice (LY is same at JR above) due to LYC vs HBlank STAT isr triggering        
+    // Entered during ~mode 3 / oam scan
     first_scanline_of_stretch_setup$:
+        // Do the busy loop for HBlank before turning on the HBlank ISR
+        // That way the ISR doesn't accidentally re-trigger
+        mode_wait_loop$:
+        ldh a, (_STAT_REG + 0)          // Wait to exit until mode change (3 -> 0)
+        and a, #STATF_BUSY              // so LY changes and this handler doesn't get called twice after HBlank ISR is enabled
+        jr nz, mode_wait_loop$          //
+
+        ld  a, #STATF_MODE00            // Turn on HBlank interrupt for rest of frame (also turns off LYC in, but it's optional)
+        ldh (_STAT_REG+0), a            //
+
+                                        // Below Needs to happen after HBlank wait loop in order to show mid-line glitching from the changeover
 
         ld  a, (#_map_y)                // Reset Scroll Y for start of warped region
-        add a, #WARPED_AREA_START_Y     // TODO: for now, compensate for top non-warped region size
+        add a, #WARPED_AREA_START_Y     // Offset to compensate for vertical size of top non-warped region
         ldh (_SCY_REG + 0), a \
 
         ld  a, (#_map_x)                // Update Scroll X for warped region
         ldh (_SCX_REG + 0), a \
 
-        ld  a, #STATF_MODE00            // Turn on HBlank interrupt for rest of frame (also turns off LYC in, but it's optional)
-        ldh (_STAT_REG+0), a \
-
         ldh a, (_LCDC_REG + 0) \
         and a, #LCDCF_BG9C00 ^ #0xFF    // Turn off horizon BG Map and select main one
         ldh (_LCDC_REG + 0), a          // TODO: timing here is sensitive to avoid glitches, consider padding it to fall into a better mode
 
+        // TODO: try prepping it so that the first call to the HBlank handler can happen immediately from here
+                // To save at least one call into the ISR
+        /*
+        // Prep for jump to Hblank handler
+        ldh a, (_LY_REG+0) //
+        sub a, #WARPED_AREA_START_Y //
+        jr scanline_map_stretch$    // Now apply
+        */
+
         pop af \
         reti \
-
 
     __endasm;
 
@@ -147,15 +142,16 @@ ISR_VECTOR(VECTOR_STAT, map_stat_isr)
 //     - Turn *ON** LYC interrupt
 //
 void vblank_isr_map_reset (void) {
-    // Switch to alternate BG map with horizon
-    LCDC_REG |= LCDCF_BG9C00;
-
     // Updates for TOP non-warped region
     SCY_REG = 0;
     SCX_REG = map_x_top;
 
+    // Switch to alternate BG map with horizon
+    LCDC_REG |= LCDCF_BG9C00;
+
     // Turn OFF HBlank int (STATF_MODE00) and turn on LYC int (STATF_LYC)
     STAT_REG = STATF_LYC;
+    IF_REG &= ~0x02; // TODO CONSTANT // Clear any pending stat interrupt, fixes junk line at top of screen
 }
 // TODO: Does above need to preserve A REG?
 
