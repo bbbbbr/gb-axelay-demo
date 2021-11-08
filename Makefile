@@ -1,9 +1,9 @@
 #
-# A Makefile that compiles all .c and .s files in "src" and "res" 
+# A Makefile that compiles all .c and .s files in "src" and "res"
 # subdirectories and places the output in a "obj" subdirectory
 #
 
-# If you move this project you can change the directory 
+# If you move this project you can change the directory
 # to match your GBDK root directory (ex: GBDK_HOME = "C:/GBDK/"
 GBDK_HOME = ../../gbdk2020/gbdk-2020-git/build/gbdk/
 
@@ -14,7 +14,7 @@ LCC = $(GBDK_HOME)bin/lcc
 # LCCFLAGS = -debug
 
 # MBC5 + Ram + Battery, ROM Banks=0, RAM Banks = 2
-LCCFLAGS = -debug -Wl-yt0x1B -Wm-yn"GBAXELAY"  -Wl-ya1
+LCCFLAGS = -debug -Wl-yt0x1B -Wm-yn"GBAXELAY"  -Wl-ya1 -Wm-yS 
 
 
 # You can set the name of the .gb ROM file here

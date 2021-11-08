@@ -24,11 +24,13 @@ void init_gfx(void) {
 
 
 uint8_t map_y = 0;
-uint8_t map_x = 1;
+uint8_t map_x = 0;
+uint8_t map_x_top = 0;
 
 // For now Scroll X amount needs to be +2 and init value of 1
 // so that it avoids some PPU behavior that's different when SCX % 8 = 0
 #define SCROLL_X_AMOUNT 2u
+#define SCROLL_X_AMOUNT_TOP (SCROLL_X_AMOUNT / 2) // Scroll top region 1/2 as fast
 #define SCROLL_Y_AMOUNT 1u
 
 void main() {
@@ -39,16 +41,18 @@ void main() {
 
     while (1) {
         wait_vbl_done();
-        // Reset scy offset pointer at start of frame
-        // TODO: move into Vblank ISR/etc
+        // These get reset in the vblank ISR and updated in the HBlank ISR
+        // SCX_REG = map_x;
+        // SCY_REG = map_y;
 
-        SCX_REG = map_x;
-        SCY_REG = map_y;
-
-        if (KEY_PRESSED(J_LEFT))
+        if (KEY_PRESSED(J_LEFT)) {
             map_x -= SCROLL_X_AMOUNT;
-        else if (KEY_PRESSED(J_RIGHT))
+            map_x_top -= SCROLL_X_AMOUNT_TOP;
+        }
+        else if (KEY_PRESSED(J_RIGHT)) {
             map_x += SCROLL_X_AMOUNT;
+            map_x_top += SCROLL_X_AMOUNT_TOP;
+        }
 
         if (KEY_PRESSED(J_UP))
             map_y -= SCROLL_Y_AMOUNT;
