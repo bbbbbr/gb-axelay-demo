@@ -5,15 +5,21 @@
 #include "../res/bigmap_map.h"
 #include "../res/bigmap_tiles.h"
 
+#include "../res/horizon_map.h"
+#include "../res/horizon_tiles.h"
+
 #include "map.h"
 
 
 void init_gfx(void) {
 
     set_bkg_data(0, 241u, bigmap_tiles);
-
     set_bkg_submap(0, 0, 32, 32, bigmap_map, bigmap_mapWidth);
     // set_bkg_tiles(0, 0, 20, 18, bigmap_map);
+
+    // Set up horizon on alternate map (usually used for the Window)
+    set_bkg_data(240u, horizon_tiles_count, horizon_tiles);
+    set_win_submap(0, 0, 32, 3, horizon_map, horizon_map_width);
 
     SCX_REG = 0;
     SCY_REG = 0;

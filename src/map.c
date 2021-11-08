@@ -61,7 +61,7 @@ const uint8_t __at(0x7E00) scy_horizon_offsets[] = {
 };
 
 
-#define WARPED_AREA_START_Y 32
+#define WARPED_AREA_START_Y 24
 
 // TODO: would it be better to swap out some variable and then do a reset jump?
 
@@ -103,20 +103,26 @@ void map_stat_isr(void) __interrupt __naked {
         pop af \
         reti;
 
-    // 112 cycles
+    // x cycles
     // Do some setup on first scanline of the warped region
     // This only gets called *ONCE* per frame
     //
+// FIXME: this is getting called twice (LY is same at JR above) due to LYC vs HBlank STAT isr triggering        
     first_scanline_of_stretch_setup$:
-        // TODO: change BG map source
+
         ld  a, (#_map_y)                // Reset Scroll Y for start of warped region
         add a, #WARPED_AREA_START_Y     // TODO: for now, compensate for top non-warped region size
         ldh (_SCY_REG + 0), a \
+
         ld  a, (#_map_x)                // Update Scroll X for warped region
         ldh (_SCX_REG + 0), a \
 
         ld  a, #STATF_MODE00            // Turn on HBlank interrupt for rest of frame (also turns off LYC in, but it's optional)
         ldh (_STAT_REG+0), a \
+
+        ldh a, (_LCDC_REG + 0) \
+        and a, #LCDCF_BG9C00 ^ #0xFF    // Turn off horizon BG Map and select main one
+        ldh (_LCDC_REG + 0), a          // TODO: timing here is sensitive to avoid glitches, consider padding it to fall into a better mode
 
         pop af \
         reti \
@@ -141,11 +147,15 @@ ISR_VECTOR(VECTOR_STAT, map_stat_isr)
 //     - Turn *ON** LYC interrupt
 //
 void vblank_isr_map_reset (void) {
+    // Switch to alternate BG map with horizon
+    LCDC_REG |= LCDCF_BG9C00;
+
     // Updates for TOP non-warped region
     SCY_REG = 0;
     SCX_REG = map_x_top;
 
-    STAT_REG = STATF_LYC; // Turn OFF HBlank int (STATF_MODE00) and turn on LYC int (STATF_LYC)
+    // Turn OFF HBlank int (STATF_MODE00) and turn on LYC int (STATF_LYC)
+    STAT_REG = STATF_LYC;
 }
 // TODO: Does above need to preserve A REG?
 
