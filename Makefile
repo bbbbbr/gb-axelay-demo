@@ -7,6 +7,8 @@
 # to match your GBDK root directory (ex: GBDK_HOME = "C:/GBDK/"
 GBDK_HOME = ../../gbdk2020/gbdk-2020-git/build/gbdk/
 
+# ~/git/Gimp/gimp-tilemap-gb/console/bin/linux/png2gbtiles horizon.png -csource -tileorg=245 horizon
+
 LCC = $(GBDK_HOME)bin/lcc 
 
 # You can set flags for LCC here

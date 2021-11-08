@@ -5,8 +5,8 @@ Filename: horizon_tiles.h
 Tile Header File
 */
 
-#define horizon_tiles_count 15
-#define horizon_tiles_bytes 240
+#define horizon_tiles_count 10
+#define horizon_tiles_bytes 160
 /* Start of tile array */
 extern unsigned char horizon_tiles[];
 

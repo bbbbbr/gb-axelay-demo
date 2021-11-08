@@ -61,7 +61,7 @@ const uint8_t __at(0x7E00) scy_horizon_offsets[] = {
 };
 
 
-#define WARPED_AREA_START_Y 24
+#define WARPED_AREA_START_Y 32
 
 // TODO: would it be better to swap out some variable and then do a reset jump?
 

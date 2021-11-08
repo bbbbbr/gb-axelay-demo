@@ -18,8 +18,8 @@ void init_gfx(void) {
     // set_bkg_tiles(0, 0, 20, 18, bigmap_map);
 
     // Set up horizon on alternate map (usually used for the Window)
-    set_bkg_data(240u, horizon_tiles_count, horizon_tiles);
-    set_win_submap(0, 0, 32, 3, horizon_map, horizon_map_width);
+    set_bkg_data(245u, horizon_tiles_count, horizon_tiles);
+    set_win_submap(0, 0, 32, 4, horizon_map, horizon_map_width);
 
     SCX_REG = 0;
     SCY_REG = 0;
