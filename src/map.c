@@ -78,39 +78,50 @@ const uint8_t __at(0x7E00) scy_horizon_offsets[] = {
 //   - Apply SCY offset based on LY based LUT
 void map_stat_isr(void) __interrupt __naked {
     __asm \
-        push AF \
-        ldh a, (_LY_REG+0)            // Get current Y Line
-        sub a, #WARPED_AREA_START_Y \
-        jp  NZ, scanline_map_stretch$ // If it's not the first line then kkip to effect
 
+    // 44 cycles -> HBlank handler, +4 more -> LYC handler
+    // Get current Y line and determine whether to do
+    // LYC interrupt or scanline interrupt
+    push af \
+    ldh a, (_LY_REG+0)
+    sub a, #WARPED_AREA_START_Y \
+    jr  z, first_scanline_of_stretch_setup$        // Less cycles when not taken, use that path for HBlank
+
+    // 100 cycles
+    // For all later scanlines, apply the warp effect
+    //
+    scanline_map_stretch$:
+        push hl \
+
+        ld  l, a                        // A = (current scanline - top non-warped region size)
+        ld  h, #0x7E                    // High byte of address for SCY offsets LUT (fixed location 256 byte aligned)
+        ldh a, (_SCY_REG+0)             // Get current Scroll Y
+        add a, (hl)                     // Add LUT offset to Scroll Y based indexed based on current LYC value
+        ldh (_SCY_REG+0), a             // Apply the updated scroll value
+
+        pop hl \
+        pop af \
+        reti;
+
+    // 112 cycles
     // Do some setup on first scanline of the warped region
     // This only gets called *ONCE* per frame
+    //
     first_scanline_of_stretch_setup$:
-
-        // TODO: change map
-
-        ld  a, (#_map_y)               // Reset Scroll Y for start of warped region
-        add a, #WARPED_AREA_START_Y    // TODO: for now, compensate for top non-warped region size
+        // TODO: change BG map source
+        ld  a, (#_map_y)                // Reset Scroll Y for start of warped region
+        add a, #WARPED_AREA_START_Y     // TODO: for now, compensate for top non-warped region size
         ldh (_SCY_REG + 0), a \
-        ld  a, (#_map_x)               // Update Scroll X for warped region
+        ld  a, (#_map_x)                // Update Scroll X for warped region
         ldh (_SCX_REG + 0), a \
 
-        ld  a, #STATF_MODE00           // Turn on HBlank interrupt for rest of frame (also turns off LYC in, but it's optional)
+        ld  a, #STATF_MODE00            // Turn on HBlank interrupt for rest of frame (also turns off LYC in, but it's optional)
         ldh (_STAT_REG+0), a \
-        pop AF \
+
+        pop af \
         reti \
 
-    // For all later scanlines, apply the warp effect
-    scanline_map_stretch$:
-        push HL \
-        ld  l, a \            // A = (current scanline - top non-warped region size)
-        ld  h, #0x7E          // High byte of address for SCY offsets LUT (fixed location 256 byte aligned)
-        ldh a, (_SCY_REG+0)   // Get current Scroll Y
-        add a, (hl)           // Add LUT offset to Scroll Y based indexed based on current LYC value
-        ldh (_SCY_REG+0), a   // Apply the updated scroll value
-        pop HL \
-        pop AF \
-        reti;
+
     __endasm;
 
 }
