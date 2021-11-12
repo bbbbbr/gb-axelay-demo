@@ -106,19 +106,18 @@ const uint8_t __at(0x7E00) scy_horizon_offsets[] = {
 void map_stat_isr(void) __interrupt __naked {
     __asm \
 
-    // 44 cycles -> HBlank handler, +4 more -> LYC handler
     // Get current Y line and determine whether to do
     // LYC interrupt or scanline interrupt
-    push af \
+    push af
     ldh a, (_LY_REG+0)
-    sub a, #WARPED_AREA_START_Y \
+    sub a, #WARPED_AREA_START_Y
     jr  z, first_scanline_of_stretch_setup$        // Less cycles when not taken, use that path for HBlank
 
-    // 100 cycles
     // For all later scanlines, apply the warp effect
     //
+    // Entered during start of ~HBlank
     scanline_map_stretch$:
-        push hl \
+        push hl
 
         ld  l, a                        // A = (current scanline - top non-warped region size)
         ld  h, #0x7E                    // High byte of address for SCY offsets LUT (fixed location 256 byte aligned)
@@ -126,15 +125,14 @@ void map_stat_isr(void) __interrupt __naked {
         add a, (hl)                     // Add LUT offset to Scroll Y based indexed based on current LYC value
         ldh (_SCY_REG+0), a             // Apply the updated scroll value
 
-        pop hl \
-        pop af \
+        pop hl
+        pop af
         reti;
 
-    // x cycles
     // Do some setup on first scanline of the warped region
     // This only gets called *ONCE* per frame
     //
-    // Entered during ~mode 3 / oam scan
+    // Entered during ~oam scan
     first_scanline_of_stretch_setup$:
         // Do the busy loop for HBlank before turning on the HBlank ISR
         // That way the ISR doesn't accidentally re-trigger
@@ -150,26 +148,19 @@ void map_stat_isr(void) __interrupt __naked {
 
         ld  a, (#_map_y)                // Reset Scroll Y for start of warped region
         add a, #WARPED_AREA_START_Y     // Offset to compensate for vertical size of top non-warped region
-        ldh (_SCY_REG + 0), a \
+        ldh (_SCY_REG + 0), a
 
         ld  a, (#_map_x)                // Update Scroll X for warped region
-        ldh (_SCX_REG + 0), a \
+        ldh (_SCX_REG + 0), a
 
-        ldh a, (_LCDC_REG + 0) \
+        ldh a, (_LCDC_REG + 0)
         and a, #LCDCF_BG9C00 ^ #0xFF    // Turn off horizon BG Map and select main one
-        ldh (_LCDC_REG + 0), a          // TODO: timing here is sensitive to avoid glitches, consider padding it to fall into a better mode
+        ldh (_LCDC_REG + 0), a          // Timing here is sensitive to which mode in order to avoid glitches
 
         // TODO: try prepping it so that the first call to the HBlank handler can happen immediately from here
-                // To save at least one call into the ISR
-        /*
-        // Prep for jump to Hblank handler
-        ldh a, (_LY_REG+0) //
-        sub a, #WARPED_AREA_START_Y //
-        jr scanline_map_stretch$    // Now apply
-        */
 
-        pop af \
-        reti \
+        pop af
+        reti
 
     __endasm;
 
