@@ -15,8 +15,8 @@ LCC = $(GBDK_HOME)bin/lcc
 # For example, you can uncomment the line below to turn on debug output
 # LCCFLAGS = -debug
 
-# MBC5 + Ram + Battery, ROM Banks=0, RAM Banks = 2
-LCCFLAGS = -debug -Wl-yt0x1B -Wm-yn"GBAXELAY"  -Wl-ya1 -Wm-yS 
+# MBC5 + Ram + Battery, ROM Banks=0, RAM Banks = 2, DMG+CGB support
+LCCFLAGS = -debug -Wl-yt0x1B -Wm-yn"GBAXELAY"  -Wl-ya1 -Wm-yS -Wm-yc
 
 
 # You can set the name of the .gb ROM file here

@@ -2,8 +2,8 @@
 #include <stdint.h>
 #include "input.h"
 
-#include "../res/bigmap_map.h"
-#include "../res/bigmap_tiles.h"
+#include "../res/nes_map.h"
+#include "../res/nes_tiles.h"
 
 #include "../res/horizon_map.h"
 #include "../res/horizon_tiles.h"
@@ -13,9 +13,36 @@
 
 void init_gfx(void) {
 
-    set_bkg_data(0, 241u, bigmap_tiles);
-    set_bkg_submap(0, 0, 32, 32, bigmap_map, bigmap_mapWidth);
-    // set_bkg_tiles(0, 0, 20, 18, bigmap_map);
+    set_bkg_data(0, nes_tiles_count, nes_tiles);
+    // set_bkg_tiles(0, 0, 32, 32, nes_map);
+     set_bkg_tiles(0, (map_y >> 3) & 0x1Fu,                           // Start Y row: Map Y downshifted to tiles, clamped to HW map buffer dimensions (32 x 32)
+                   nes_map_width, DEVICE_SCREEN_BUFFER_HEIGHT,        // Need full hardware map buffer Height due to stretching (TODO: change this to fir 18 high?)
+                   &nes_map[((map_y >> 3) & 0x7Fu) * nes_map_width]); // Map Offset: Map Y downshifted to tiles, clamped to map Height (0x80 in tiles)
+
+
+
+    if (_cpu == CGB_TYPE) {
+
+        // Use 2x CGB speed if we have it
+        cpu_fast();
+
+        // Set CGB Palette
+        set_bkg_palette(0, nes_num_pals, nes_pal_cgb);
+
+        // Draw map tile colors/etc
+        VBK_REG = 1; // Same as setting tiles above, but with tile attributes
+        // set_bkg_tiles(0, 0, 32, 32, nes_map_attr);
+         set_bkg_tiles(0, (map_y >> 3) & 0x1Fu,
+                       nes_map_width, DEVICE_SCREEN_BUFFER_HEIGHT,
+                       &nes_map_attr[((map_y >> 3) & 0x7Fu) * nes_map_width]);
+        VBK_REG = 0; // Return to writing tile IDs
+    } else {
+        // Set DMG palette
+        BGP_REG = DMG_PALETTE(DMG_BLACK, DMG_DARK_GRAY, DMG_LITE_GRAY, DMG_WHITE);
+    }
+
+
+    // set_bkg_tiles(0, 0, 20, 18, nes_map);
 
     // Set up horizon on alternate map (usually used for the Window)
     set_bkg_data(245u, horizon_tiles_count, horizon_tiles);
@@ -36,9 +63,16 @@ void init_gfx(void) {
 
 void main() {
 
+    map_y = 0; // (nes_map_height - 32u) * 8;
+    map_x = 0;
+
+    // TODO: fade-out
     init_gfx();
 
+
     map_isr_enable();
+
+    // TODO: fade-in    
 
     while (1) {
         wait_vbl_done();
@@ -46,13 +80,20 @@ void main() {
         // SCX_REG = map_x;
         // SCY_REG = map_y;
 
+#define MAP_MIN_X 0
+#define MAP_MAX_X ((((DEVICE_SCREEN_BUFFER_WIDTH) - (DEVICE_SCREEN_WIDTH)) * 8) - 1)
+
         if (KEY_PRESSED(J_LEFT)) {
-            map_x -= SCROLL_X_AMOUNT;
-            map_x_top -= SCROLL_X_AMOUNT_TOP;
+            if (map_x > MAP_MIN_X) {
+                map_x -= SCROLL_X_AMOUNT;
+                map_x_top -= SCROLL_X_AMOUNT_TOP;
+            }
         }
         else if (KEY_PRESSED(J_RIGHT)) {
-            map_x += SCROLL_X_AMOUNT;
-            map_x_top += SCROLL_X_AMOUNT_TOP;
+            if (map_x < MAP_MAX_X) {
+                map_x += SCROLL_X_AMOUNT;
+                map_x_top += SCROLL_X_AMOUNT_TOP;
+            }
         }
 
         if (KEY_PRESSED(J_UP))
