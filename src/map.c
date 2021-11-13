@@ -5,7 +5,9 @@
 #include <gb/isr.h>
 
 
-uint8_t map_y = 0;
+uint16_t map_y = 0;
+uint8_t map_lcd_scy_start = 0;
+
 uint8_t map_x = 0;
 uint8_t map_x_top = 0;
 
@@ -146,7 +148,7 @@ void map_stat_isr(void) __interrupt __naked {
 
                                         // Below Needs to happen after HBlank wait loop in order to show mid-line glitching from the changeover
 
-        ld  a, (#_map_y)                // Reset Scroll Y for start of warped region
+        ld  a, (#_map_lcd_scy_start)                // Reset Scroll Y for start of warped region
         add a, #WARPED_AREA_START_Y     // Offset to compensate for vertical size of top non-warped region
         ldh (_SCY_REG + 0), a
 
@@ -184,6 +186,7 @@ void vblank_isr_map_reset (void) {
     // Updates for TOP non-warped region
     SCY_REG = 0;
     SCX_REG = map_x_top;
+    map_lcd_scy_start = (uint8_t)map_y; // Clip to 0 - 255 for hardware map buffer height
 
     // Switch to alternate BG map with horizon
     LCDC_REG |= LCDCF_BG9C00;
