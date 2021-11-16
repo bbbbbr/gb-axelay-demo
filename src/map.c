@@ -4,6 +4,8 @@
 
 #include <gb/isr.h>
 
+#include "common.h"
+
 
 uint16_t map_y = 0;
 uint8_t map_lcd_scy_start = 0;
@@ -93,11 +95,9 @@ const uint8_t __at(0x7E00) scy_horizon_offsets[] = {
 };
 
 
-#define WARPED_AREA_START_Y (32 - 1) // One line before desired start line
-
 // LYC and HBlank scanline STAT handler
 // * First Scanline :
-//   - Starts at line WARPED_AREA_START_Y
+//   - Starts at line HORIZON_Y_START
 //   - Load new Scroll Y start value for map with offset
 //   - STAT_REG
 //     - Turn *ON* HBlank interrupt
@@ -112,7 +112,7 @@ void map_stat_isr(void) __interrupt __naked {
     // LYC interrupt or scanline interrupt
     push af
     ldh a, (_LY_REG+0)
-    sub a, #WARPED_AREA_START_Y
+    sub a, #HORIZON_Y_START
     jr  z, first_scanline_of_stretch_setup$        // Less cycles when not taken, use that path for HBlank
 
     // For all later scanlines, apply the warp effect
@@ -149,7 +149,7 @@ void map_stat_isr(void) __interrupt __naked {
                                         // Below Needs to happen after HBlank wait loop in order to show mid-line glitching from the changeover
 
         ld  a, (#_map_lcd_scy_start)                // Reset Scroll Y for start of warped region
-        add a, #WARPED_AREA_START_Y     // Offset to compensate for vertical size of top non-warped region
+        add a, #HORIZON_Y_START     // Offset to compensate for vertical size of top non-warped region
         ldh (_SCY_REG + 0), a
 
         ld  a, (#_map_x)                // Update Scroll X for warped region
@@ -205,7 +205,7 @@ void map_isr_enable(void) {
         STAT_REG = STATF_LYC; // First pass after turning on uses LYC STAT interrupt
         STAT_REG = STATF_MODE00;
         add_VBL(vblank_isr_map_reset);
-        LYC_REG = WARPED_AREA_START_Y;
+        LYC_REG = HORIZON_Y_START;
     }
     // Try to wait until just after the start of the next frame
     wait_vbl_done();

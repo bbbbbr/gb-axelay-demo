@@ -1,4 +1,8 @@
+
 #include <gbdk/platform.h>
+#include <gbdk/metasprites.h>
+
+#include <rand.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include "input.h"
@@ -9,16 +13,20 @@
 #include "../res/horizon_map.h"
 #include "../res/horizon_tiles.h"
 
+#include "../res/sprite_boulders.h"
+
 #include "map.h"
 
+#include "common.h"
 
-void init_gfx(void) {
+
+void init_gfx_map() {
 
     set_bkg_data(0, nes_tiles_count, nes_tiles);
     // set_bkg_tiles(0, 0, 32, 32, nes_map);
-     set_bkg_tiles(0, (map_y >> 3) & 0x1Fu,                           // Start Y row: Map Y downshifted to tiles, clamped to HW map buffer dimensions (32 x 32)
-                   nes_map_width, DEVICE_SCREEN_BUFFER_HEIGHT,        // Need full hardware map buffer Height due to stretching (TODO: change this to fir 18 high?)
-                   &nes_map[((map_y >> 3) & 0x7Fu) * nes_map_width]); // Map Offset: Map Y downshifted to tiles, clamped to map Height (0x80 in tiles)
+    set_bkg_tiles(0, (map_y >> 3) & 0x1Fu,                           // Start Y row: Map Y downshifted to tiles, clamped to HW map buffer dimensions (32 x 32)
+                  nes_map_width, DEVICE_SCREEN_BUFFER_HEIGHT,        // Need full hardware map buffer Height due to stretching (TODO: change this to fir 18 high?)
+                  &nes_map[((map_y >> 3) & 0x7Fu) * nes_map_width]); // Map Offset: Map Y downshifted to tiles, clamped to map Height (0x80 in tiles)
 
 
 
@@ -48,10 +56,69 @@ void init_gfx(void) {
 
     SCX_REG = 0;
     SCY_REG = 0;
+}
+
+
+
+#define SPR_NUM_START            0
+#define SPR_TILES_START_BOULDERS (sizeof(sprite_boulders_tiles) >> 4)
+
+void init_gfx_sprites() {
+
+//    uint8_t sprite_idx = 0;
+//    sprite_idx += sprite_boulders.num_tiles;
+
+    // Load metasprite tile data into VRAM
+    // set_sprite_data((SPR_TILES_START_BOULDERS), sprite_boulders.num_tiles, sprite_boulders.data);
+    // Bug in png2gbtiles, incorrect tile count for 16x16 sprite, fix by *2
+    set_sprite_data((SPR_TILES_START_BOULDERS), sprite_boulders_TILE_COUNT * 2, sprite_boulders_tiles);
+
+    SPRITES_8x16;
+
+    if (_cpu == CGB_TYPE) {
+        // Set CGB Palette
+        set_sprite_palette(0, nes_num_pals, nes_pal_cgb);
+    } else {
+        // Set DMG palette
+        BGP_REG = DMG_PALETTE(DMG_BLACK, DMG_DARK_GRAY, DMG_LITE_GRAY, DMG_WHITE);
+    }
+}
+
+
+void init_gfx(void) {
+
+    init_gfx_map();
+    init_gfx_sprites();
 
     SHOW_BKG;
+    SHOW_SPRITES;
+
     DISPLAY_ON;
 }
+
+void init(void) {
+    map_y = (nes_map_height - DEVICE_SCREEN_BUFFER_HEIGHT) * 8;  // Set to bottom of map
+    map_x = 0;
+
+    if (_cpu == CGB_TYPE) {
+        // Use 2x CGB speed if available
+        cpu_fast();
+    }
+
+    // TODO: bind this to a button press
+    initrand(sys_time);
+
+    // TODO: fade-out
+    init_gfx();
+
+    map_isr_enable();
+
+    // TODO: fade-in
+}
+
+
+// const uint8_t spr_sin_table[] = {0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0};
+const uint8_t spr_sin_table[] = {0, 1, 2, 3, -3, -2, -1, 0};
 
 // For now Scroll X amount needs to be +2 and init value of 1
 // so that it avoids some PPU behavior that's different when SCX % 8 = 0
@@ -66,22 +133,15 @@ void init_gfx(void) {
 bool draw_queued_map = false;
 uint16_t draw_queue_y_row = 0;
 
+
+#define SPRITE_COUNT_BOULDER 10
+uint8_t sprite_boulder_x = 144u / 2u;
+uint8_t sprite_boulder_y = HORIZON_Y_START + 16u;
+uint8_t sprite_boulder_mtspr = 0;
+
 void main() {
 
-    map_y = (nes_map_height - DEVICE_SCREEN_BUFFER_HEIGHT) * 8;  // Set to bottom of map
-    map_x = 0;
-
-    if (_cpu == CGB_TYPE) {
-        // Use 2x CGB speed if available
-        cpu_fast();
-    }
-
-    // TODO: fade-out
-    init_gfx();
-
-    map_isr_enable();
-
-    // TODO: fade-in
+    init();
 
     while (1) {
         wait_vbl_done();
@@ -89,6 +149,7 @@ void main() {
 
         // == User Input ==
 
+        // Left / Right movement
         if (KEY_PRESSED(J_LEFT)) {
             if (map_x > MAP_MIN_X) {
                 map_x -= SCROLL_X_AMOUNT;
@@ -102,12 +163,12 @@ void main() {
             }
         }
 
-
-        // == Map Updates (from user input) ==
+        // Map Up/Down scrolling + prep for tile loading
 
         // Auto-scrolling
         // if (sys_time & 0x01u)
-
+        //    map_y -= SCROLL_Y_AMOUNT;
+        //
         // map_y loops around, no need for min/max
         if (KEY_PRESSED(J_UP)) {
             map_y -= SCROLL_Y_AMOUNT;
@@ -128,6 +189,11 @@ void main() {
             }
         }
 
+        // ==
+// TODO: move map drawing into function
+
+// TODO: FIXME: Getting BGB exception here sometimes (16 bit inc/dec in OAM range) - maybe here????
+// dec de ; DE = 0xFE9E
         if (draw_queued_map) {
             draw_queued_map = false;
 
@@ -149,6 +215,37 @@ void main() {
             }
 
         }
+
+
+        // == Sprites ==
+
+        uint8_t hiwater = 0;
+
+        // Hide the metasprite or move it & apply any rotation settings
+        // if (hide)
+        //    hide_metasprite(sprite_boulders_metasprites[idx], SPR_NUM_START);
+
+        sprite_boulder_y++;
+        if (sprite_boulder_y > (144u + 16u)) {
+            // Psuedo random launcing for now
+            sprite_boulder_x = (sys_time & 0x7Fu) + ((DEVICE_SCREEN_PX_WIDTH -  0x7Fu) / 2);
+            sprite_boulder_y = HORIZON_Y_START + 16u;
+        }
+        // sprite_boulder_x += spr_sin_table[sprite_boulder_y & 0x07u];
+
+        // Y position determines boulder size and Y location - for now linear, later use a non-linear LUT that matches horizon
+        sprite_boulder_mtspr = (sprite_boulder_y - (HORIZON_Y_START + 16u)) >> 4;
+        hiwater = move_metasprite(sprite_boulders_metasprites[sprite_boulder_mtspr],
+        // hiwater = move_metasprite(sprite_boulders_metasprites[2],
+                                  (SPR_TILES_START_BOULDERS),
+                                  (SPR_NUM_START), sprite_boulder_x, sprite_boulder_y);
+
+        // // Hide rest of the hardware sprites, because amount of sprites differ between animation frames.
+        hide_sprites_range(hiwater, 40);
+
+
+
+
 
         UPDATE_KEYS();
     }
