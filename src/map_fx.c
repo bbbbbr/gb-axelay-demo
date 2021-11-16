@@ -1,17 +1,14 @@
 #include <gbdk/platform.h>
 #include <stdint.h>
-#include "input.h"
+#include <stdbool.h>
 
 #include <gb/isr.h>
 
+#include "map_scroll.h"
+
 #include "common.h"
 
-
-uint16_t map_y = 0;
-uint8_t map_lcd_scy_start = 0;
-
-uint8_t map_x = 0;
-uint8_t map_x_top = 0;
+static uint8_t map_lcd_scy_start = 0;
 
 // Start of New Frame
 //
@@ -105,7 +102,7 @@ const uint8_t __at(0x7E00) scy_horizon_offsets[] = {
 //
 // * Map Scrolling Area: Per Scanline compress/stretch effect
 //   - Apply SCY offsets based on LY based LUT
-void map_stat_isr(void) __interrupt __naked {
+void map_fx_stat_isr(void) __interrupt __naked {
     __asm \
 
     // Get current Y line and determine whether to do
@@ -169,7 +166,7 @@ void map_stat_isr(void) __interrupt __naked {
 }
 
 // // Register scanline / STAT ISR handler function for the STAT interrupt
-ISR_VECTOR(VECTOR_STAT, map_stat_isr)
+ISR_VECTOR(VECTOR_STAT, map_fx_stat_isr)
 
 
 
@@ -198,7 +195,7 @@ void vblank_isr_map_reset (void) {
 // TODO: Does above need to preserve A REG?
 
 
-void map_isr_enable(void) {
+void map_fx_isr_enable(void) {
 
     // Enable STAT ISR
     __critical {
@@ -213,7 +210,7 @@ void map_isr_enable(void) {
 }
 
 
-void map_isr_disable(void) {
+void map_fx_isr_disable(void) {
 
     // Disable STAT ISR
     __critical {
@@ -224,8 +221,5 @@ void map_isr_disable(void) {
 
 
 
-void map_init(void) {
-
-}
 
 
