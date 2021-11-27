@@ -62,7 +62,7 @@ uint8_t entity_boulders_update(uint8_t oam_high_water) {
 
     // Slowly introduce more boulders
     if (entity_boulders_active < SPRITE_COUNT_BOULDER) {
-        if ((sys_time & 0x01Fu) == 0x00)
+        if (((uint8_t)sys_time & 0x1Fu) == 0x00)
             entity_boulders_active++;
     }
 
