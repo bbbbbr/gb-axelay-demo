@@ -54,7 +54,7 @@ void init_gfx_sprites() {
         set_sprite_palette(0, nes_num_pals, nes_pal_cgb);
     } else {
         // Set DMG palette
-        BGP_REG = DMG_PALETTE(DMG_BLACK, DMG_DARK_GRAY, DMG_LITE_GRAY, DMG_WHITE);
+        OBP0_REG = DMG_PALETTE(DMG_BLACK, DMG_BLACK, DMG_WHITE, DMG_WHITE);
     }
 }
 
