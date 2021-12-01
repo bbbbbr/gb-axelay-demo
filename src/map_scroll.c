@@ -69,7 +69,7 @@ void map_scroll_redraw_all(void) {
 // Scroll based on user input
 void map_scroll_update(void) {
 
-    // Left / Right movement (Locked to Hardware Map Buffer Size, No Wrapping)
+/*    // Left / Right movement (Locked to Hardware Map Buffer Size, No Wrapping)
     if (KEY_PRESSED(J_LEFT)) {
         if (map_x > MAP_MIN_X) {
             map_x -= SCROLL_X_AMOUNT;
@@ -82,7 +82,7 @@ void map_scroll_update(void) {
             map_x_top += SCROLL_X_AMOUNT_TOP;
         }
     }
-
+*/
     // Map Up/Down scrolling + prep for tile loading
 
     // Auto-scrolling Vertical Scrolling
@@ -92,6 +92,10 @@ void map_scroll_update(void) {
         // Draw next *TOP* row if needed
         if ((map_y & 0x07) == 0) {
 
+            // Queued scroll updates now get applied in the trailing vblank ISR
+            // TODO: Van't protect with a critical section here since it will mess up
+            //       the LCD effect, but perhaps move it into the VBlank ISR later.
+            //       Maybe not really an issue since this gets called after wait_vbl_done();
             draw_queued_map = MAP_SCROLL_CHUNK_COUNT;
             draw_queue_y_row = (map_y >> 3); // Top of HW Map Buffer
 
@@ -100,7 +104,6 @@ void map_scroll_update(void) {
             p_map_src = &nes_map[map_offset];
             p_map_attr_src = &nes_map_attr[map_offset];
         }
-        // Scroll updates now get applied in the trailing vblank ISR
     }
 
     // == Turned Off:  Manual Vertical Scrolling ==
