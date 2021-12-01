@@ -88,7 +88,7 @@ uint8_t entity_boulders_update(uint8_t oam_high_water) {
         // Y position determines boulder size and Y location
         entity_boulder_mtspr = spr_select_by_count[spr_count];
         // TODO: hack-fix remove
-        if (entity_boulder_mtspr > 8) entity_boulder_mtspr = 8;
+if (entity_boulder_mtspr > 8) entity_boulder_mtspr = 8;
 
         // TODO: some kind of overflow and crash when SPRITE_COUNT_BOULDER >= 19u - something in move_metasprite
         // Setting this guard to < 37 results in a crash
@@ -96,11 +96,11 @@ uint8_t entity_boulders_update(uint8_t oam_high_water) {
         // Is it a memory overwrite error, or an increasing race condition?
                 // Might be in set_data()?? -> copy_vram (see BGB), or the interplay between these and a timing issue?
         // TODO: WORSE IN DMG MODE?? Problem here with vram when CPU usage gets high in DMG Mode
-        if (oam_high_water < 36) {
+if (oam_high_water < 36) {
                 oam_high_water += move_metasprite(sprite_boulders_metasprites[entity_boulder_mtspr],
                                                  (SPR_TILES_START_BOULDERS),
                                                  oam_high_water, entity_boulder_x[idx], spr_screen_y);
-        }
+}
     }
 
     return (oam_high_water);

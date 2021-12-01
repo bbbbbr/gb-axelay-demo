@@ -10,6 +10,8 @@
 #include "../res/horizon_map.h"
 #include "../res/horizon_tiles.h"
 #include "../res/sprite_boulders.h"
+#include "../res/sprite_ship.h"
+#include "../res/sprite_ship_canopy.h"
 
 #include "input.h"
 #include "common.h"
@@ -18,6 +20,8 @@
 #include "map_scroll.h"
 #include "player_input.h"
 #include "entity_boulders.h"
+#include "entity_ship.h"
+
 
 void init_gfx_map() {
 
@@ -39,13 +43,10 @@ void init_gfx_map() {
 
 void init_gfx_sprites() {
 
-//    uint8_t sprite_idx = 0;
-//    sprite_idx += sprite_boulders.num_tiles;
-
     // Load metasprite tile data into VRAM
-    // set_sprite_data((SPR_TILES_START_BOULDERS), sprite_boulders.num_tiles, sprite_boulders.data);
-    // Bug in png2gbtiles, incorrect tile count for 16x16 sprite, fix by *2
-    set_sprite_data((SPR_TILES_START_BOULDERS), sprite_boulders_TILE_COUNT * 2, sprite_boulders_tiles);
+    set_sprite_data((SPR_TILES_START_BOULDERS), sprite_boulders_TILE_COUNT, sprite_boulders_tiles);
+    set_sprite_data((SPR_TILES_START_SHIP), sprite_ship_TILE_COUNT, sprite_ship_tiles);
+    set_sprite_data((SPR_TILES_START_SHIP_CANOPY), sprite_ship_canopy_TILE_COUNT, sprite_ship_canopy_tiles);
 
     SPRITES_8x16;
 
@@ -53,8 +54,8 @@ void init_gfx_sprites() {
         // Set CGB Palette
         set_sprite_palette(0, nes_num_pals, nes_pal_cgb);
     } else {
-        // Set DMG palette
-        OBP0_REG = DMG_PALETTE(DMG_BLACK, DMG_BLACK, DMG_WHITE, DMG_WHITE);
+        // Set DMG palette (top two colors BLACK for higher contrast against background)
+        OBP0_REG = DMG_PALETTE(DMG_BLACK, DMG_BLACK, DMG_LITE_GRAY, DMG_WHITE);
     }
 }
 
@@ -85,7 +86,9 @@ void init(void) {
     init_gfx();
 
     map_scroll_init();
+
     entity_boulders_init();
+    entity_ship_init();
 
     map_fx_isr_enable();
 
@@ -110,6 +113,7 @@ void main() {
         // == Sprites ==
         oam_high_water = 0;
         oam_high_water = entity_boulders_update(oam_high_water);
+        oam_high_water = entity_ship_update(oam_high_water);
 
         // Hide rest of the hardware sprites, because amount of sprites differ between animation frames.
         hide_sprites_range(oam_high_water, 40);
