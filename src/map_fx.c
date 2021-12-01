@@ -1,10 +1,12 @@
 #include <gbdk/platform.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include <gb/isr.h>
 
 #include "map_scroll.h"
+#include "../res/nes_map.h"
 
 #include "common.h"
 
@@ -191,6 +193,39 @@ void vblank_isr_map_reset (void) {
     // Turn OFF HBlank int (STATF_MODE00) and turn on LYC int (STATF_LYC)
     STAT_REG = STATF_LYC;
     IF_REG &= ~0x02; // TODO CONSTANT // Clear any pending stat interrupt, fixes junk line at top of screen
+
+
+    // Horizontal background map scrolling updaates
+    if (draw_queued_map) {
+        // Draw a chunk of the currently queued row, increments Vram destination and map source each time
+
+        // TODO: OPTIMIZE: it's just 4 bytes, this could be optimized if variable chunk sizing is removed
+        // In VBlank, memcpy should be ok here
+        // set_data(
+        memcpy(p_vram_dest, // Y Row clamped to HW map buffer dimensions (32 x 32) then x 32 ( << 5) to get row address in vram
+               p_map_src,  // Map Offset: Map Y downshifted to tiles, clamped to map Height (0x80 in tiles)
+               nes_map_width / MAP_SCROLL_CHUNK_COUNT);  // Write: 1 x row of tiles / bytes
+
+        if (_cpu == CGB_TYPE) {
+            // Draw map tile colors/etc
+            VBK_REG = 1; // Same as setting tiles above, but with tile attributes
+            // Draw a chunk of the currently queued row
+
+            // In VBlank, memcpy should be ok here
+            // set_data(
+            memcpy(p_vram_dest, // Y Row clamped to HW map buffer dimensions (32 x 32) then x 32 ( << 5) to get row address in vram
+                   p_map_attr_src,  // Map Offset: Map Y downshifted to tiles, clamped to map Height (0x80 in tiles)
+                   nes_map_width / MAP_SCROLL_CHUNK_COUNT);  // Write: 1 x row of tiles / bytes
+            VBK_REG = 0; // Return to writing tile IDs
+
+            p_map_attr_src += nes_map_width / 8;
+        }
+
+        // move to next VRAM update chunk address
+        p_vram_dest += nes_map_width / 8;
+        p_map_src += nes_map_width / 8;
+        draw_queued_map--;
+    }
 }
 // TODO: Does above need to preserve A REG?
 

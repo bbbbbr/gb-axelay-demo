@@ -25,8 +25,12 @@ uint8_t  map_x = 0;
 uint8_t  map_x_top = 0;
 
 // Static Locals
-static bool     draw_queued_map = false;
+uint8_t  draw_queued_map = false;
 static uint16_t draw_queue_y_row = 0;
+
+uint8_t * p_vram_dest;
+uint8_t * p_map_src;
+uint8_t * p_map_attr_src;
 
 
 // Reset vars and draw initial map
@@ -85,14 +89,25 @@ void map_scroll_update(void) {
     if (sys_time & 0x01u) {
         map_y -= SCROLL_Y_AMOUNT;
 
-        // Draw next *TOP* row if needed (TODO: reduce cpu spike, split to draw 1/8th for every 1 pixel scrolled)
+        // Draw next *TOP* row if needed
         if ((map_y & 0x07) == 0) {
-            draw_queued_map = true;
+
+            draw_queued_map = MAP_SCROLL_CHUNK_COUNT;
             draw_queue_y_row = (map_y >> 3); // Top of HW Map Buffer
+
+            p_vram_dest = (uint8_t *)0x9800 + ((draw_queue_y_row & 0x1Fu) << 5);
+            uint16_t map_offset = (draw_queue_y_row & 0x7Fu) * nes_map_width;
+            p_map_src = &nes_map[map_offset];
+            p_map_attr_src = &nes_map_attr[map_offset];
         }
+        // Scroll updates now get applied in the trailing vblank ISR
     }
 
     // == Turned Off:  Manual Vertical Scrolling ==
+    //
+    // NOTE: No longer compatible with current drawing, would need to revert to non-chunk code below
+    //       and updated p_vram_dest, p_map_src, p_map_attr_src
+    //
     // map_y loops around, no need for min/max
     // if (KEY_PRESSED(J_UP)) {
     //     map_y -= SCROLL_Y_AMOUNT;
@@ -113,29 +128,31 @@ void map_scroll_update(void) {
 
 
     // == Map Scroll Drawing ==
-    // TODO: FIXME: Getting BGB exception here sometimes (16 bit inc/dec in OAM range) - maybe here????
-    // dec de ; DE = 0xFE9E
-    if (draw_queued_map) {
+    //
+    // NOTE: Map scroll tile updating is now moved to the end of the VBlank ISR (~line 145)
+    //       It helps to avoid the VRAM write exceptions that were happening
+
+/*    if (draw_queued_map) {
         draw_queued_map = false;
 
         // WARNING: Can't use set_bkg_data here since state of LCDC.3 (BG map selector) is unpredictable due to
         //          mid-frame flips, causing set_bkg_data to sometimes write to the map at 0x9C00 instead of 0x9800
         // Draw next row
-        set_data( (uint8_t *)0x9800 + ((draw_queue_y_row & 0x1Fu) << 5), // Y Row clamped to HW map buffer dimensions (32 x 32) then x 32 ( << 5) to get row address in vram
-                  &nes_map[(draw_queue_y_row & 0x7Fu) * nes_map_width],  // Map Offset: Map Y downshifted to tiles, clamped to map Height (0x80 in tiles)
+        set_data( p_vram_dest, // Y Row clamped to HW map buffer dimensions (32 x 32) then x 32 ( << 5) to get row address in vram
+                  p_map_src,  // Map Offset: Map Y downshifted to tiles, clamped to map Height (0x80 in tiles)
                   nes_map_width);                                        // Write: 1 x row of tiles / bytes
 
         if (_cpu == CGB_TYPE) {
             // Draw map tile colors/etc
             VBK_REG = 1; // Same as setting tiles above, but with tile attributes
             // Draw next row
-            set_data( (uint8_t *)0x9800 + ((draw_queue_y_row & 0x1Fu) << 5), // Y Row clamped to HW map buffer dimensions (32 x 32) then x 32 ( << 5) to get row address in vram
-                      &nes_map_attr[(draw_queue_y_row & 0x7Fu) * nes_map_width],  // Map Offset: Map Y downshifted to tiles, clamped to map Height (0x80 in tiles)
+            set_data( p_vram_dest, // Y Row clamped to HW map buffer dimensions (32 x 32) then x 32 ( << 5) to get row address in vram
+                      p_map_attr_src,  // Map Offset: Map Y downshifted to tiles, clamped to map Height (0x80 in tiles)
                       nes_map_width);                                        // Write: 1 x row of tiles / bytes
             VBK_REG = 0; // Return to writing tile IDs
         }
 
     }
-
+*/
 }
 
