@@ -11,8 +11,11 @@
 #include "../res/sprite_ship.h"
 #include "../res/sprite_ship_canopy.h"
 
+#include "entity_shots.h"
 
 
+
+// TODO: optimize ship movement, probably fixed point and 1.5 pixels per frame
 #define SHIP_MOVE_AMT_X 1u
 #define SHIP_MOVE_AMT_Y 1u
 
@@ -81,6 +84,10 @@ uint8_t entity_ship_update(uint8_t oam_high_water) {
         if (ship_y < SHIP_Y_MAX) {
             ship_y += SHIP_MOVE_AMT_Y;
         }
+    }
+
+    if (KEY_PRESSED(J_B)) {
+        entity_shots_add(ship_x, ship_y);
     }
 
 

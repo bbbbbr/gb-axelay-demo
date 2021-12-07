@@ -10,8 +10,8 @@
 #define sprite_boulders_WIDTH 16
 #define sprite_boulders_HEIGHT 16
 #define sprite_boulders_TILE_COUNT 34
-#define sprite_boulders_PIVOT_X 8
-#define sprite_boulders_PIVOT_Y 8
+#define sprite_boulders_PIVOT_X 0
+#define sprite_boulders_PIVOT_Y 0
 #define sprite_boulders_PIVOT_W 16
 #define sprite_boulders_PIVOT_H 16
 

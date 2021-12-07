@@ -38,39 +38,39 @@ const uint8_t sprite_boulders_tiles[544] = {
 };
 
 const metasprite_t sprite_boulders_metasprite0[] = {
-	METASPR_ITEM(-8, -8, 0, 4), METASPR_ITEM(0, 8, 2, 4), METASPR_TERM
+	METASPR_ITEM(0, 0, 0, 4), METASPR_ITEM(0, 8, 2, 4), METASPR_TERM
 };
 
 const metasprite_t sprite_boulders_metasprite1[] = {
-	METASPR_ITEM(-8, -8, 4, 4), METASPR_ITEM(0, 8, 4, 100), METASPR_TERM
+	METASPR_ITEM(0, 0, 4, 4), METASPR_ITEM(0, 8, 4, 100), METASPR_TERM
 };
 
 const metasprite_t sprite_boulders_metasprite2[] = {
-	METASPR_ITEM(-8, -8, 6, 4), METASPR_ITEM(0, 8, 8, 4), METASPR_TERM
+	METASPR_ITEM(0, 0, 6, 4), METASPR_ITEM(0, 8, 8, 4), METASPR_TERM
 };
 
 const metasprite_t sprite_boulders_metasprite3[] = {
-	METASPR_ITEM(-8, -8, 10, 4), METASPR_ITEM(0, 8, 12, 4), METASPR_TERM
+	METASPR_ITEM(0, 0, 10, 4), METASPR_ITEM(0, 8, 12, 4), METASPR_TERM
 };
 
 const metasprite_t sprite_boulders_metasprite4[] = {
-	METASPR_ITEM(-8, -8, 14, 4), METASPR_ITEM(0, 8, 16, 4), METASPR_TERM
+	METASPR_ITEM(0, 0, 14, 4), METASPR_ITEM(0, 8, 16, 4), METASPR_TERM
 };
 
 const metasprite_t sprite_boulders_metasprite5[] = {
-	METASPR_ITEM(-8, -8, 18, 4), METASPR_ITEM(0, 8, 20, 4), METASPR_TERM
+	METASPR_ITEM(0, 0, 18, 4), METASPR_ITEM(0, 8, 20, 4), METASPR_TERM
 };
 
 const metasprite_t sprite_boulders_metasprite6[] = {
-	METASPR_ITEM(-8, -8, 22, 4), METASPR_ITEM(0, 8, 24, 4), METASPR_TERM
+	METASPR_ITEM(0, 0, 22, 4), METASPR_ITEM(0, 8, 24, 4), METASPR_TERM
 };
 
 const metasprite_t sprite_boulders_metasprite7[] = {
-	METASPR_ITEM(-8, -8, 26, 4), METASPR_ITEM(0, 8, 28, 4), METASPR_TERM
+	METASPR_ITEM(0, 0, 26, 4), METASPR_ITEM(0, 8, 28, 4), METASPR_TERM
 };
 
 const metasprite_t sprite_boulders_metasprite8[] = {
-	METASPR_ITEM(-8, -8, 30, 4), METASPR_ITEM(0, 8, 32, 4), METASPR_TERM
+	METASPR_ITEM(0, 0, 30, 4), METASPR_ITEM(0, 8, 32, 4), METASPR_TERM
 };
 
 const metasprite_t* const sprite_boulders_metasprites[9] = {

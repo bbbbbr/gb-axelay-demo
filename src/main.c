@@ -12,6 +12,7 @@
 #include "../res/sprite_boulders.h"
 #include "../res/sprite_ship.h"
 #include "../res/sprite_ship_canopy.h"
+#include "../res/sprite_shots.h"
 
 #include "input.h"
 #include "common.h"
@@ -21,8 +22,10 @@
 #include "player_input.h"
 #include "entity_boulders.h"
 #include "entity_ship.h"
+#include "entity_shots.h"
 
 
+// TODO: move to gfx.x
 void init_gfx_map() {
 
     set_bkg_data(0, nes_tiles_count, nes_tiles);
@@ -47,6 +50,7 @@ void init_gfx_sprites() {
     set_sprite_data((SPR_TILES_START_BOULDERS), sprite_boulders_TILE_COUNT, sprite_boulders_tiles);
     set_sprite_data((SPR_TILES_START_SHIP), sprite_ship_TILE_COUNT, sprite_ship_tiles);
     set_sprite_data((SPR_TILES_START_SHIP_CANOPY), sprite_ship_canopy_TILE_COUNT, sprite_ship_canopy_tiles);
+    set_sprite_data((SPR_TILES_START_SHOTS), sprite_shots_TILE_COUNT, sprite_shots_tiles);
 
     SPRITES_8x16;
 
@@ -114,6 +118,7 @@ void main() {
         oam_high_water = 0;
         oam_high_water = entity_boulders_update(oam_high_water);
         oam_high_water = entity_ship_update(oam_high_water);
+        oam_high_water = entity_shots_update(oam_high_water);
 
         // Hide rest of the hardware sprites, because amount of sprites differ between animation frames.
         hide_sprites_range(oam_high_water, 40);
