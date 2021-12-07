@@ -6,16 +6,14 @@
 
 #include "common.h"
 #include "input.h"
+#include "lookup_tables.h"
 
+// For calculating tile in memory start addresses
 #include "../res/sprite_boulders.h"
 #include "../res/sprite_ship.h"
 #include "../res/sprite_ship_canopy.h"
 #include "../res/sprite_shots.h"
 
-
-// TODO: fixme: common.c or lookup_tables.c
-extern const uint8_t spr_select_by_count[];
-extern const uint8_t spr_y_by_count[];
 
 #define SPRITE_COUNT_SHOTS_MAX  5u
 uint8_t entity_shots_x[SPRITE_COUNT_SHOTS_MAX];
@@ -71,7 +69,7 @@ void entity_shots_add(uint8_t x, uint8_t y) {
 }
 
 
-// WARNING: Max value in spr_select_by_count[] should be identical
+// WARNING: Max value in LUT_sprite_id_by_count[] should be identical
 //          to total number of metasprites in *both* Shots and Boulders
 //          Shots and boulders should also have identical metasprite pivot offsets
 uint8_t entity_shots_update(uint8_t oam_high_water) {
@@ -95,13 +93,13 @@ uint8_t entity_shots_update(uint8_t oam_high_water) {
                     if (oam_high_water < (40 - 1)) { // TODO: defines here
 
                         // Move ship and update metasprite
-                        oam_high_water += move_metasprite(sprite_shots_metasprites[ spr_select_by_count[spr_count] ],
+                        oam_high_water += move_metasprite(sprite_shots_metasprites[ LUT_sprite_id_by_count[spr_count] ],
                                                          (SPR_TILES_START_SHOTS),
-                        // oam_high_water += move_metasprite(sprite_boulders_metasprites[ spr_select_by_count[spr_count] ],
+                        // oam_high_water += move_metasprite(sprite_boulders_metasprites[ LUT_sprite_id_by_count[spr_count] ],
                         //                                  (SPR_TILES_START_BOULDERS),
                                                          oam_high_water,
                                                          entity_shots_x[idx],
-                                                         spr_y_by_count[spr_count]);
+                                                         LUT_y_pos_by_count[spr_count]);
                     }
                 } else {
                     // Remove shot

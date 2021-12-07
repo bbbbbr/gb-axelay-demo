@@ -5,11 +5,13 @@
 #include <rand.h>
 
 #include "common.h"
+#include "lookup_tables.h"
 
+// For calculating tile in memory start addresses
 #include "../res/sprite_boulders.h"
 
 // Boulders Screen X value to add to current X per frame: Range 0 - 255 mapped to 32 - 143
-static const uint8_t spr_sin_table_x[] = {
+static const uint8_t boulder_sin_table_x[] = {
     // Scale factor of 16 x 80
     // 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, -1, 0, -1, 0, -1, 0, 0, -1, 0, -1, -1, 0, -1, 0, -1, -1, 0, -1, 0, -1, -1, 0, -1, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, -1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, -1, 1, 0, -1, 0, 0, -1, -1, 0, -1, 0, -1, -1, -1, -1, -1, -1, -2, -1, -1, -1, -2, -1, -2, -1, -2, -1, -2, -2, -1, -2, -1, -2, -1, -2, -1, -1, -2, -1, -1, -2, -1, -1, 0, -1, -1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 2, 0, 2, 1, 1, 2, 2, 2, 2, 2, 2, 2, 3, 2, 2, 3, 2, 3, 2, 3, 3, 2, 3, 2, 3, 2, 3, 2, 2, 3, 2, 2, 1, 2, 1, 2, 2, 1, 1, 0, 1, 0, 1, -1, 0, 0, -1, -1, -2, 0, -3, -1, -2, -2, -2, -4, -2, -3, -4, -4, -3, -4, -4, -4, -5, -5, -5, -6, -6,
     // Scale factor of 20 x 80
@@ -17,22 +19,8 @@ static const uint8_t spr_sin_table_x[] = {
 };
 
 
-// Boulders Size Sprite Select: Range 0 - 255 mapped to 32 - 143
-// Should roughly match Screen Y LUT
-const uint8_t spr_select_by_count[] = {
-   // Num Sprites = 9, Scaler = 16
-   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8
-};
-
-// Boulders Screen Y location: Range 0 - 255 mapped to (32 + 6)- 143
-const uint8_t spr_y_by_count[] = {
-   // 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 34, 34, 34, 34, 34, 34, 34, 35, 35, 35, 35, 35, 35, 35, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 37, 37, 37, 37, 37, 38, 38, 38, 38, 39, 39, 39, 39, 39, 40, 40, 40, 40, 40, 40, 40, 40, 40, 41, 41, 41, 41, 42, 42, 42, 43, 43, 43, 43, 43, 43, 43, 44, 44, 44, 44, 45, 45, 45, 45, 46, 46, 46, 47, 47, 47, 47, 47, 48, 48, 48, 48, 49, 49, 50, 50, 50, 50, 50, 51, 51, 51, 51, 52, 52, 53, 54, 54, 54, 54, 54, 54, 55, 56, 56, 56, 56, 57, 57, 57, 57, 58, 59, 59, 60, 60, 60, 60, 60, 61, 61, 62, 62, 63, 63, 64, 64, 64, 65, 65, 66, 66, 67, 67, 68, 68, 69, 70, 70, 71, 71, 71, 71, 72, 74, 74, 74, 74, 75, 75, 77, 77, 78, 78, 78, 80, 80, 81, 81, 82, 83, 83, 85, 85, 86, 86, 87, 87, 88, 90, 90, 92, 92, 93, 93, 95, 95, 96, 98, 98, 99, 99, 102, 102, 104, 106, 106, 108, 108, 111, 111, 113, 113, 116, 119, 119, 124, 124, 130, 130, 142, 143,
-   38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 39, 39, 39, 39, 39, 39, 39, 39, 39, 39, 40, 40, 40, 40, 40, 40, 40, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 42, 42, 42, 42, 42, 42, 42, 43, 43, 43, 43, 43, 44, 44, 44, 44, 44, 44, 44, 44, 44, 45, 45, 45, 45, 45, 45, 46, 46, 46, 47, 47, 47, 47, 47, 47, 47, 48, 48, 48, 48, 49, 49, 49, 49, 49, 49, 49, 50, 50, 50, 50, 51, 51, 51, 52, 52, 52, 52, 52, 53, 53, 53, 53, 54, 54, 55, 55, 55, 55, 55, 56, 56, 56, 56, 57, 57, 58, 58, 58, 58, 58, 59, 59, 60, 60, 60, 60, 60, 61, 61, 62, 62, 63, 63, 63, 64, 64, 65, 65, 65, 66, 66, 66, 66, 67, 67, 68, 68, 69, 69, 69, 70, 70, 71, 71, 72, 72, 73, 74, 74, 74, 74, 75, 75, 76, 77, 77, 78, 78, 79, 79, 80, 80, 81, 82, 82, 83, 83, 84, 84, 85, 86, 86, 88, 88, 89, 89, 90, 90, 91, 93, 93, 94, 94, 96, 96, 97, 97, 99, 100, 100, 102, 102, 104, 104, 106, 107, 107, 110, 110, 113, 113, 115, 115, 118, 121, 121, 125, 125, 130, 130, 142, 143, 
-};
-
-
 // Boulders Screen X initial launch position: alternate a little so they don't show up all at once
-static const uint8_t spr_launch_table_x[] = {17, 85, 35, 140, 52, 150, 70,  105};
+static const uint8_t boulder_launch_table_x[] = {17, 85, 35, 140, 52, 150, 70,  105};
 
 
 #define SPRITE_COUNT_BOULDER 8u //20u // TODO: some kind of overflow and crash when >= 19u - something in move_metasprite
@@ -45,7 +33,7 @@ uint8_t entity_boulder_mtspr;
 void entity_boulders_init(void) {
     uint8_t c;
     for (c = 0u; c < SPRITE_COUNT_BOULDER; c++) {
-        entity_boulder_x[c] = spr_launch_table_x[c];
+        entity_boulder_x[c] = boulder_launch_table_x[c];
         entity_boulder_count[c] = 0;
     }
 
@@ -77,17 +65,17 @@ uint8_t entity_boulders_update(uint8_t oam_high_water) {
 
         // Reset X on wraparound
         if (spr_count == 0)
-            entity_boulder_x[idx] = spr_launch_table_x[idx];
+            entity_boulder_x[idx] = boulder_launch_table_x[idx];
         else
-            entity_boulder_x[idx] += spr_sin_table_x[spr_count];
+            entity_boulder_x[idx] += boulder_sin_table_x[spr_count];
 
         // TODO: Fixme align sprite pixels to top of sprite instead of centered, remove offset
-        spr_screen_y = spr_y_by_count[spr_count];//  + 12;// 16;
+        spr_screen_y = LUT_y_pos_by_count[spr_count];//  + 12;// 16;
 
         // TODO: Drop metasprites and just write directly to OAM
         //
         // Y position determines boulder size and Y location
-        entity_boulder_mtspr = spr_select_by_count[spr_count];
+        entity_boulder_mtspr = LUT_sprite_id_by_count[spr_count];
         // TODO: hack-fix remove
 if (entity_boulder_mtspr > 8) entity_boulder_mtspr = 8;
 

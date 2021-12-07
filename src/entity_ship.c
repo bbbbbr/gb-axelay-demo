@@ -7,6 +7,7 @@
 #include "common.h"
 #include "input.h"
 
+// For calculating tile in memory start addresses
 #include "../res/sprite_boulders.h"
 #include "../res/sprite_ship.h"
 #include "../res/sprite_ship_canopy.h"
