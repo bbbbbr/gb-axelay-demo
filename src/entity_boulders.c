@@ -7,6 +7,9 @@
 #include "common.h"
 #include "lookup_tables.h"
 
+#include "entity_boulders.h"
+#include "entity_shots.h"
+
 // For calculating tile in memory start addresses
 #include "../res/sprite_boulders.h"
 
@@ -23,75 +26,219 @@ static const uint8_t boulder_sin_table_x[] = {
 static const uint8_t boulder_launch_table_x[] = {17, 85, 35, 140, 52, 150, 70,  105};
 
 
-#define SPRITE_COUNT_BOULDER 8u //20u // TODO: some kind of overflow and crash when >= 19u - something in move_metasprite
-uint8_t entity_boulders_active;
-uint8_t entity_boulder_x[SPRITE_COUNT_BOULDER];
-uint8_t entity_boulder_count[SPRITE_COUNT_BOULDER];
-uint8_t entity_boulder_mtspr;
+uint8_t boulders_active_total;
+entity boulders[ENTITY_COUNT_BOULDERS];
 
+
+
+// uint8_t boulders_col_group_y_count[PARTITION_COUNT];
+//uint8_t boulders_col_group_y[PARTITION_COUNT][ENTITY_COUNT_BOULDERS]; // TODO: per-partition bucket size can probably be reduced by 1/2 at least
+// uint8_t boulders_col_group_x[PARTITION_COUNT]; // TODO: per-partition bucket size can probably be reduced by 1/2 at least
 
 void entity_boulders_init(void) {
     uint8_t c;
-    for (c = 0u; c < SPRITE_COUNT_BOULDER; c++) {
-        entity_boulder_x[c] = boulder_launch_table_x[c];
-        entity_boulder_count[c] = 0;
+    for (c = 0u; c < ENTITY_COUNT_BOULDERS; c++) {
+        boulders[c].x = boulder_launch_table_x[c];
+        boulders[c].y_counter = 0;
+        // boulders[c].status = SPR_STATUS_HIDDEN;
+        boulders_active[c] = SPR_STATUS_HIDDEN;
     }
 
-    entity_boulders_active = 0;
+    boulders_active_total = 0;
+}
+
+
+
+void entity_boulders_update_col_groups(void) __naked {
+/*
+    uint8_t idx;
+    uint8_t * p_col_group = (uint8_t *)BOULDER_COL_GROUP_X_ADDR;
+    uint8_t * p_shadow_oam = (uint8_t *)shadow_OAM; // OAM: [y, x, tile_id, flags]
+
+    // Reset collision table
+    for (idx = 0u; idx < boulders_active_total; idx++)
+        *p_col_group = 0;
+
+    // // Update collision table
+    // for (idx = 0u; idx < (1 << boulders_active_total); idx<<1) {
+    //     *(p_col_group + (*p_shadow_oam >>  PARTITION_BITSHIFT)) = idx;
+    //     p_shadow_oam++;// += 4;
+    // }
+*/
+
+
+// BROKEN? THIS WAS ENABLED
+/*
+    __asm \
+
+        // Zero out collision group array
+
+        xor   a
+        ld    hl, #_boulders_col_group_x
+        .rept 8
+            ld  (hl+), a
+        .endm
+
+// TODO:
+//   ONLY CALC FOR ACTIVE BOULDERS
+//   properly handle 2x sprites for every
+
+
+        // * boulders_col_group_x[]
+        // * boulders_active[]
+        // * shadow_OAM[]
+        //
+        // Counter 0 .. 7
+        // Bitwise counter 1 .. 128
+
+//        n_bit = 1;
+//        while (counter != 8 or 128) {
+//            If (p_boulders_active[n] != 0) {
+//                temp_bucket = _shadow_OAM[(n * 8) + 1] >> 5;
+//                boulders_col_group_x[ temp_bucket ] |= n_bit;
+//            }
+//            n_bit <<= 1;
+//            n++;
+//        }
+//
+
+        ld    h, #_boulders_col_group_x >> 8   // High byte for into collision array
+        ld    l, (#_boulders_active)       // Counter
+        ld    e, #0x01                     // Bitwise counter <-- needs to match boulders active
+        ld    bc, #(_shadow_OAM + 1)       // Start at last X. OAM: [n+0]=y, [n+1]=x, [n+2]=tile_id, [n+3]=flags]
+
+    boulder_entity_col_group_loop$:
+
+        ld    l, d         // D has _boulders_active lower address byte
+        ld    a, (hl)      // test if _boulders_active[n] == inactive
+        jr    z, boulder_entity_col_group_loop_skip_inactive$
+
+        ld    a, (bc)   // Calculate X collision group for boulder (reduce C to 3 bits)
+        swap  a
+        rra
+        and   a, #0x07
+
+        ld    h, #_boulders_col_group_x >> 8   // Load upper address bit of boulders active array
+// L COUNTER GETS WIPED OUT HERE        <<<<<<-----
+        ld    l, a      // Use collision group as lower address byte to index collision array
+        ld    a, e
+        or    a, (hl)   // OR in the Load bitwise counter and save it
+        ld    (hl), a
+
+
+    boulder_entity_col_group_loop_skip_inactive$:
+        ld    a, #0x08  // Check counter for loop exit
+        add   a, c      // Move to next object X value in OAM
+        ld    c, a
+
+        rl    e         // Upshift bitwise counter
+
+        ld    a, #(0x08 + 0x08)  // Check counter for loop exit
+        sub   a, d
+        jr    nz, boulder_entity_col_group_loop$
+    boulder_entity_col_group_loop_done$:
+
+        // .rept 4
+        //     inc   c
+        // .endm
+
+    __endasm;
+*/
+/*
+//     //            boulders_col_group_x[spr_x_pos >> PARTITION_BITSHIFT] |= 1 << idx;
+//             //BOULDER_COL_GROUP_X_ADDR_MSB
+//             // uint8_t * p_addr =  (uint8_t *)(((uint16_t )(&boulders_col_group_x) << 8) || (spr_x_pos >> PARTITION_BITSHIFT));
+//             *(uint8_t *)(BOULDER_COL_GROUP_X_ADDR | (spr_x_pos >> PARTITION_BITSHIFT)) |= 1 << idx;
+//             // boulders_col_group_x[spr_x_pos >> PARTITION_BITSHIFT] |= 1 << idx;
+//     __endasm;
+*/
 }
 
 void entity_boulders_add(void) {
 }
 
+
+uint8_t spr_y_pos;
+uint8_t spr_x_pos;
+uint8_t spr_y_bucket;
+
+// TODO: optimize: make oam_high_water global and don't pass it between functions
 uint8_t entity_boulders_update(uint8_t oam_high_water) {
 
     uint8_t idx;
-    uint8_t spr_screen_y;
     uint8_t spr_count;
+    // uint8_t spr_y_pos;
+    // uint8_t spr_x_pos;
+    // uint8_t spr_y_bucket;
 
+    // // Reset partition group counters
+    // for (idx = 0u; idx < PARTITION_COUNT; idx++) {
+    //     boulders_col_group_x[idx] = 0;
+    //     // boulders_col_group_y_count[idx] = 0;
+    // }
+
+    // TODO: change to spawning on a timer, like shots do
     // Slowly introduce more boulders
-    if (entity_boulders_active < SPRITE_COUNT_BOULDER) {
-        if (((uint8_t)sys_time & 0x1Fu) == 0x00)
-            entity_boulders_active++;
+    if (boulders_active_total < ENTITY_COUNT_BOULDERS) {
+        if (((uint8_t)sys_time & 0x1Fu) == 0x00) {
+            boulders_active[boulders_active_total] = SPR_STATUS_ACTIVE;
+            //boulders[boulders_active_total].status = SPR_STATUS_ACTIVE;
+            boulders_active_total++;
+        }
     }
 
     // Update all sprites
     //
     // TODO: Once finalized consider unrolling this loop
-    for (idx = 0u; idx < entity_boulders_active; idx++) {
+    // for (idx = 0u; idx < boulders_active_total; idx++) {
+    for (idx = 0u; idx < boulders_active_total; idx++) {
 
         // Increment per-sprite counter and cache a temp copy
-        spr_count = entity_boulder_count[idx]++;
+        spr_count = boulders[idx].y_counter++;
 
         // Reset X on wraparound
-        if (spr_count == 0)
-            entity_boulder_x[idx] = boulder_launch_table_x[idx];
+        if (spr_count == 0) {
+            // boulders[idx].status = SPR_STATUS_ACTIVE;
+            boulders_active[idx] = SPR_STATUS_ACTIVE;
+            spr_x_pos = boulders[idx].x = boulder_launch_table_x[idx];
+        }
         else
-            entity_boulder_x[idx] += boulder_sin_table_x[spr_count];
+            spr_x_pos = boulders[idx].x += boulder_sin_table_x[spr_count];
 
-        // TODO: Fixme align sprite pixels to top of sprite instead of centered, remove offset
-        spr_screen_y = LUT_y_pos_by_count[spr_count];//  + 12;// 16;
+        // Get warped Y position from linear Y counter lookup
+        spr_y_pos = LUT_y_pos_by_count[spr_count];
+
 
         // TODO: Drop metasprites and just write directly to OAM
-        //
-        // Y position determines boulder size and Y location
-        entity_boulder_mtspr = LUT_sprite_id_by_count[spr_count];
-        // TODO: hack-fix remove
-if (entity_boulder_mtspr > 8) entity_boulder_mtspr = 8;
+        // if (oam_high_water < (40u - 2u)) {
+        //if (boulders[idx].status != SPR_STATUS_HIDDEN) {
+        if (boulders_active[idx] != SPR_STATUS_HIDDEN) {
+            oam_high_water += move_metasprite(sprite_boulders_metasprites[ LUT_sprite_id_by_count[spr_count] ],
+                                             (SPR_TILES_START_BOULDERS),
+                                             oam_high_water,
+                                             spr_x_pos,
+                                             spr_y_pos);
 
-        // TODO: some kind of overflow and crash when SPRITE_COUNT_BOULDER >= 19u - something in move_metasprite
-        // Setting this guard to < 37 results in a crash
-        // Even < 36 I can start to see random GB Tile Data or map Data VRAM Overwrites / corruption
-        // Is it a memory overwrite error, or an increasing race condition?
-                // Might be in set_data()?? -> copy_vram (see BGB), or the interplay between these and a timing issue?
-        // TODO: WORSE IN DMG MODE?? Problem here with vram when CPU usage gets high in DMG Mode
-        if (oam_high_water < (40u - 2u)) {
-                oam_high_water += move_metasprite(sprite_boulders_metasprites[entity_boulder_mtspr],
-                                                 (SPR_TILES_START_BOULDERS),
-                                                 oam_high_water, entity_boulder_x[idx],
-                                                 spr_screen_y);
+            // TODO: Use LUT for collision size
+            // Then store Y top and bottom position in relevant collision group
+            // Top
+
+
+            // Generates massively inefficient code
+/*          spr_y_bucket = spr_y_pos >> PARTITION_BITSHIFT;
+            boulders_col_group_y[spr_y_bucket][boulders_col_group_y_count[spr_y_bucket]] = idx;
+            boulders_col_group_y_count[spr_y_bucket]++;
+            // Bottom if in a different partition
+            if (((spr_y_pos + 16) >> PARTITION_BITSHIFT) != (spr_y_bucket)) {
+                spr_y_bucket++; // If bottom partition is different, it's just the next one
+                boulders_col_group_y[(spr_y_pos + 16) >> PARTITION_BITSHIFT][boulders_col_group_y_count[spr_y_bucket]] = idx;
+                boulders_col_group_y_count[(spr_y_pos + 16) >> PARTITION_BITSHIFT]++;
+            }
+*/
         }
+        // }
     }
 
+    entity_boulders_update_col_groups();
     return (oam_high_water);
 }

@@ -104,6 +104,9 @@ const uint8_t __at(0x7E00) scy_horizon_offsets[] = {
 //
 // * Map Scrolling Area: Per Scanline compress/stretch effect
 //   - Apply SCY offsets based on LY based LUT
+//
+// Note: To make this non-interruptable by other ISRs add: __critical
+// http://sdcc.sourceforge.net/doc/sdccman.pdf#subsection.3.8.4
 void map_fx_stat_isr(void) __interrupt __naked {
     __asm \
 

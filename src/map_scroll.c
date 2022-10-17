@@ -65,6 +65,7 @@ void map_scroll_redraw_all(void) {
     }
 }
 
+uint8_t scroll_counter = 0;
 
 // Scroll based on user input
 void map_scroll_update(void) {
@@ -86,7 +87,8 @@ void map_scroll_update(void) {
     // Map Up/Down scrolling + prep for tile loading
 
     // Auto-scrolling Vertical Scrolling
-    if (sys_time & 0x01u) {
+     if ((uint8_t)sys_time & 0x01u) {
+    // if (scroll_counter++ & 0x01u) {  // Workaround for slowdown on missed clock frames
         map_y -= SCROLL_Y_AMOUNT;
 
         // Draw next *TOP* row if needed

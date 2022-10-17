@@ -16,7 +16,10 @@ LCC = $(GBDK_HOME)bin/lcc
 # LCCFLAGS = -debug
 
 # MBC5 + Ram + Battery, ROM Banks=0, RAM Banks = 2, DMG+CGB support
-LCCFLAGS = -debug -Wl-yt0x1B -Wm-yn"GBAXELAY"  -Wl-ya1 -Wm-yS -Wm-yc
+# -Wf--max-allocs-per-node50000
+# -Wl-w   Wide map listing
+# -Wl-g_shadow_OAM=0xC800 -Wl-b_DATA=0xc8a0  // Create unallocated RAM area from 0xC000 -> 0xC800 for manual data placement
+LCCFLAGS = -debug -Wl-yt0x1B -Wm-yn"GBAXELAY" -Wl-w -Wl-ya1 -Wm-yS -Wm-yc -Wl-g_shadow_OAM=0xC800 -Wl-b_DATA=0xc8a0
 
 
 # You can set the name of the .gb ROM file here

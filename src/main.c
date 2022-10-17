@@ -102,13 +102,19 @@ void init(void) {
 
 uint8_t oam_high_water = 0;
 
+uint8_t last_sys_time = 0;
+
 
 void main() {
 
     init();
 
     while (1) {
-        wait_vbl_done();
+        // TODO: FIXME: HACKAROUND: Don't wait for VBlank if last frame spilled over to the next one
+        if (last_sys_time == (uint8_t)sys_time)
+            wait_vbl_done();
+
+        last_sys_time = (uint8_t)sys_time;
         // SCX and SCY scroll regs get reset in the vblank ISR and updated in the HBlank ISR
 
         // == User Input ==
@@ -124,5 +130,7 @@ void main() {
         hide_sprites_range(oam_high_water, 40);
 
         UPDATE_KEYS();
+
+        // while (LY_REG != 139u);
     }
 }

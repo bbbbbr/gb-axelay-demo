@@ -8,6 +8,9 @@
 #include "input.h"
 #include "lookup_tables.h"
 
+#include "entity_boulders.h"
+#include "entity_shots.h"
+
 // For calculating tile in memory start addresses
 #include "../res/sprite_boulders.h"
 #include "../res/sprite_ship.h"
@@ -15,12 +18,13 @@
 #include "../res/sprite_shots.h"
 
 
-#define SPRITE_COUNT_SHOTS_MAX  5u
-uint8_t entity_shots_x[SPRITE_COUNT_SHOTS_MAX];
-uint8_t entity_shots_count[SPRITE_COUNT_SHOTS_MAX];
-bool entity_shots_active[SPRITE_COUNT_SHOTS_MAX];
-uint8_t entity_shots_active_count;
-uint8_t entity_shots_mtspr;
+// uint8_t entity_shots_x[ENTITY_COUNT_SHOTS];
+// uint8_t entity_shots_count[ENTITY_COUNT_SHOTS];
+// bool entity_shots_active[ENTITY_COUNT_SHOTS];
+// uint8_t entity_shots_mtspr;
+
+uint8_t shots_active_total;
+entity shots[ENTITY_COUNT_SHOTS];
 
 
 uint8_t entity_shots_cooldown;
@@ -35,13 +39,14 @@ uint8_t entity_shots_cooldown;
 void entity_shots_init(void) {
     uint8_t idx;
 
-    entity_shots_active_count = 0;
+    shots_active_total = 0;
     entity_shots_cooldown = SHOTS_COOLDOWN_READY;
-    for (idx = 0; idx < SPRITE_COUNT_SHOTS_MAX; idx++)
-        entity_shots_active[idx] = false;
+    for (idx = 0; idx < ENTITY_COUNT_SHOTS; idx++)
+        shots[idx].status = SPR_STATUS_HIDDEN;
 }
 
 
+// TODO: FIXME: THIS IS BUGGY WAY OF MANAGING ACTIVE SHOTS
 // TODO: inline, optimize
 void entity_shots_add(uint8_t x, uint8_t y) {
 
@@ -50,24 +55,84 @@ void entity_shots_add(uint8_t x, uint8_t y) {
     if (entity_shots_cooldown)
         entity_shots_cooldown--;
     else {
-        if (entity_shots_active_count < SPRITE_COUNT_SHOTS_MAX) {
+        if (shots_active_total < ENTITY_COUNT_SHOTS) {
 
             // Find next free
             // TODO: (optimize this)
             idx = 0;
-            while (entity_shots_active[idx] == true) {
+            while (shots[idx].status != SPR_STATUS_HIDDEN) {
                 idx++;
             }
 
-            entity_shots_x[idx] = x + SHOTS_X_OFFSET;
-            entity_shots_count[idx] = (y < 127) ? y * 2 : 255; // TODO: THIS IS A HACK, FIXME: Need a reverse mapping LUT for y -> 0 - 255 y LUT
-            entity_shots_active[idx] = true;
-            entity_shots_active_count++;
+            shots[idx].x = x + SHOTS_X_OFFSET;
+            shots[idx].y_counter = (y < 127) ? y * 2 : 255; // TODO: THIS IS A HACK, FIXME: Need a reverse mapping LUT for y -> 0 - 255 y LUT
+            shots[idx].y_pos = LUT_y_pos_by_count[ shots[idx].y_counter ];
+            shots[idx].status = SPR_STATUS_ACTIVE;
+            shots_active_total++;
             entity_shots_cooldown = SHOTS_COOLDOWN_START;
         }
     }
 }
 
+
+void entity_shots_check_collisions(uint8_t spr_x_pos, uint8_t spr_y_pos, uint8_t shot_idx) {
+/*
+    uint8_t spr_y_bucket_top, spr_y_bucket_bottom;
+    uint8_t col_group_idx;
+    uint8_t boulder_id;
+
+    // Collision test for boulders in the same Y partition
+    spr_y_bucket_top = spr_y_pos >> PARTITION_BITSHIFT;
+    spr_y_bucket_bottom = (spr_y_pos + 16) >> PARTITION_BITSHIFT;
+
+    // check_collision
+    for (col_group_idx = 0u; col_group_idx < boulders_col_group_y_count[spr_y_bucket_top]; col_group_idx++) {
+
+        boulder_id = boulders_col_group_y[spr_y_bucket_top][col_group_idx];
+
+        // TODO: actual hitbox
+        // Collision test, X first since it's less likely to match than already partitioned Y
+        if ((spr_x_pos + 8) >= boulders[boulder_id].x) {
+            if (spr_x_pos <= (boulders[boulder_id].x + 16)) { // Shot is only 8 pixels wide?
+                if (spr_y_pos <= (boulders[boulder_id].y_pos + 16)) {
+                    if ((spr_y_pos + 16) >= boulders[boulder_id].y_pos) {
+
+                        // TODO: explosions and stuff
+                        boulders[boulder_id].status = SPR_STATUS_HIDDEN;
+                        shots[shot_idx].status = SPR_STATUS_HIDDEN;
+                        shots_active_total--; // TODO: FIXME: IS THIS FUXKED?
+                    }
+                }
+            }
+        }
+    }
+
+    if (spr_y_bucket_bottom != spr_y_bucket_top) {
+
+        // check_collision
+        for (col_group_idx = 0u; col_group_idx < boulders_col_group_y_count[spr_y_bucket_bottom]; col_group_idx++) {
+
+            boulder_id = boulders_col_group_y[spr_y_bucket_bottom][col_group_idx];
+
+            // TODO: actual hitbox
+            // Collision test, X first since it's less likely to match than already partitioned Y
+            if ((spr_x_pos + 8) >= boulders[boulder_id].x) {
+                if (spr_x_pos <= (boulders[boulder_id].x + 16)) { // Shot is only 8 pixels wide?
+                    if (spr_y_pos <= (boulders[boulder_id].y_pos + 16)) {
+                        if ((spr_y_pos + 16) >= boulders[boulder_id].y_pos) {
+
+                            // TODO: explosions and stuff
+                            boulders[boulder_id].status = SPR_STATUS_HIDDEN;
+                            shots[shot_idx].status = SPR_STATUS_HIDDEN;
+                            shots_active_total--; // TODO: FIXME: IS THIS FUXKED?
+                        }
+                    }
+                }
+            }
+        }
+    }
+*/
+}
 
 // WARNING: Max value in LUT_sprite_id_by_count[] should be identical
 //          to total number of metasprites in *both* Shots and Boulders
@@ -76,35 +141,36 @@ uint8_t entity_shots_update(uint8_t oam_high_water) {
 
     uint8_t idx;
     uint8_t spr_count;
+    uint8_t spr_y_pos;
 
-    if (entity_shots_active_count) {
+    if (shots_active_total) {
 
         // TODO: optimize
-        for (idx = 0; idx < SPRITE_COUNT_SHOTS_MAX; idx++) {
+        for (idx = 0; idx < ENTITY_COUNT_SHOTS; idx++) {
 
-            if (entity_shots_active[idx]) {
+            if (shots[idx].status != SPR_STATUS_HIDDEN) {
 
                 // If still valid, move the shot and update it's sprite
-                if (entity_shots_count[idx] > SHOTS_COUNT_SPEED) {
+                if (shots[idx].y_counter > SHOTS_COUNT_SPEED) {
 
-                    spr_count = entity_shots_count[idx] -= SHOTS_COUNT_SPEED;
+                    spr_count = shots[idx].y_counter -= SHOTS_COUNT_SPEED;
+                    spr_y_pos = shots[idx].y_pos = LUT_y_pos_by_count[spr_count];
 
+                    entity_shots_check_collisions(shots[idx].x, spr_y_pos, idx);
                     // TODO: fixme
-                    if (oam_high_water < (40 - 1)) { // TODO: defines here
+                    // if (oam_high_water < (40 - 1)) { // TODO: defines here
 
                         // Move ship and update metasprite
                         oam_high_water += move_metasprite(sprite_shots_metasprites[ LUT_sprite_id_by_count[spr_count] ],
                                                          (SPR_TILES_START_SHOTS),
-                        // oam_high_water += move_metasprite(sprite_boulders_metasprites[ LUT_sprite_id_by_count[spr_count] ],
-                        //                                  (SPR_TILES_START_BOULDERS),
                                                          oam_high_water,
-                                                         entity_shots_x[idx],
-                                                         LUT_y_pos_by_count[spr_count]);
-                    }
+                                                         shots[idx].x,
+                                                         spr_y_pos);
+                    // }
                 } else {
                     // Remove shot
-                    entity_shots_active_count--;
-                    entity_shots_active[idx] = false;
+                    shots_active_total--;
+                    shots[idx].status = SPR_STATUS_HIDDEN;
                 }
 
             }
@@ -113,3 +179,33 @@ uint8_t entity_shots_update(uint8_t oam_high_water) {
 
     return (oam_high_water);
 }
+
+
+/*
+            // Check for collision with shots
+            spr_y_pos = LUT_y_pos_by_count[spr_count];
+
+            if (shots_active_total) {
+                for (shot_idx = 0u; shot_idx < ENTITY_COUNT_SHOTS; shot_idx++) {
+                    if (shots[shot_idx].status != SPR_STATUS_HIDDEN) {
+
+                        // TODO: actual hitbox
+                        // Collision test
+                        if (spr_y_pos <= (shots[shot_idx].y_pos + 16)) {
+                            if ((spr_y_pos + 16) >= shots[shot_idx].y_pos) {
+                                if ((spr_x_pos + 16) >= shots[shot_idx].x) {
+                                    if (spr_x_pos <= (shots[shot_idx].x + 8)) { // Shot is only 8 pixels wide?
+
+                                        // TODO: explosions and stuff
+//                                        boulders[idx].status = SPR_STATUS_HIDDEN;
+                                        shots[shot_idx].status = SPR_STATUS_ACTIVE;
+//                                        shots[shot_idx].status = SPR_STATUS_HIDDEN;
+//                                        shots_active_total--; // TODO: FIXME: IS THIS FUXKED?
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } // End collision test
+*/
