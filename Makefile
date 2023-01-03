@@ -18,6 +18,12 @@ LCC = $(GBDK_HOME)bin/lcc
 # MBC5 + Ram + Battery, ROM Banks=0, RAM Banks = 2, DMG+CGB support
 LCCFLAGS = -debug -Wl-yt0x1B -Wm-yn"GBAXELAY"  -Wl-ya1 -Wm-yS -Wm-yc
 
+# MegaDuck
+# LCCFLAGS = -debug -Wm-yn"GBAXELAY" -msm83:duck
+
+# Analogue Pocket
+# LCCFLAGS = -debug -Wl-yt0x1B -Wm-yn"GBAXELAY"  -Wl-ya1 -Wm-yS -Wm-yc -msm83:ap
+
 
 # You can set the name of the .gb ROM file here
 PROJECTNAME    = gbaxelay
@@ -26,6 +32,8 @@ SRCDIR      = src
 OBJDIR      = obj
 RESDIR      = res
 BINS	    = $(OBJDIR)/$(PROJECTNAME).gb
+# BINS	    = $(OBJDIR)/$(PROJECTNAME).duck
+# BINS	    = $(OBJDIR)/$(PROJECTNAME).pocket
 CSOURCES    = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(RESDIR),$(notdir $(wildcard $(dir)/*.c)))
 ASMSOURCES  = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.s)))
 OBJS       = $(CSOURCES:%.c=$(OBJDIR)/%.o) $(ASMSOURCES:%.s=$(OBJDIR)/%.o)
