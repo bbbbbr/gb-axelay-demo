@@ -10,6 +10,7 @@ GBDK_HOME = ../../gbdk2020/gbdk-2020-git/build/gbdk/
 # ~/git/Gimp/gimp-tilemap-gb/console/bin/linux/png2gbtiles horizon.png -csource -tileorg=245 horizon
 
 LCC = $(GBDK_HOME)bin/lcc 
+PNG2ASSET = $(GBDK_HOME)bin/png2asset
 
 # You can set flags for LCC here
 # For example, you can uncomment the line below to turn on debug output
@@ -67,6 +68,28 @@ $(BINS):	$(OBJS)
 
 prepare:
 	mkdir -p $(OBJDIR)
+
+assets:
+#	== BG Map Conversion
+#	tools/png2gbtiles res/nesaxelay_background_4_somelava_smaller.png -csource -c -f -p -pal=res/gb_axelay_rip_palette.txt -var=nes res/nes.c
+#	tools/png2gbtiles res/nes_map.png -csource -c -f -p -pal=res/nes_map_palette.txt -var=nes res/nes.c
+#    ---> TODO: Option to enable CGB palette array by default
+#           nes_pal_cgb[]
+#
+#	== Sprite conversion
+#    - use full 32 color indexed palette in Gimp, use mtpaint to fix gimps index color mangling if needed
+#  - Boulders
+	$(PNG2ASSET) res/sprite_boulders.png -sw 16 -sh 16 -px 0 -py 0 -pw 16 -ph 16 -spr8x16 -use_map_attributes -keep_palette_order -c sprite_boulders.c
+#
+#  - Ship
+	$(PNG2ASSET) res/sprites_ship_nocanopy.png -sw 24 -sh 32 -px 0 -py 0 -pw 16 -ph 16  -spr8x16 -use_map_attributes -keep_palette_order -c sprite_ship.c
+#
+#  - Ship Canopy
+	$(PNG2ASSET) res/sprites_ship_canopy-only_crop.png -sw 8 -sh 16 -px 0 -py 0 -pw 8 -ph 16  -spr8x16 -use_map_attributes -keep_palette_order -c sprite_ship_canopy.c
+#
+#  - Ship Bullets
+	$(PNG2ASSET) res/sprites_shots.png -sw 8 -sh 16 -px 0 -py 0 -pw 8 -ph 16  -spr8x16 -use_map_attributes -keep_palette_order -c sprite_shots.c
+
 
 clean:
 #	rm -f  *.gb *.ihx *.cdb *.adb *.noi *.map
