@@ -6,10 +6,15 @@
 #include <gbdk/platform.h>
 #include <gbdk/metasprites.h>
 
+#define sprite_shots_TILE_ORIGIN 0
+#define sprite_shots_TILE_W 8
 #define sprite_shots_TILE_H 16
 #define sprite_shots_WIDTH 8
 #define sprite_shots_HEIGHT 16
 #define sprite_shots_TILE_COUNT 18
+#define sprite_shots_PALETTE_COUNT 8
+#define sprite_shots_COLORS_PER_PALETTE 4
+#define sprite_shots_TOTAL_COLORS 32
 #define sprite_shots_PIVOT_X 0
 #define sprite_shots_PIVOT_Y 0
 #define sprite_shots_PIVOT_W 8

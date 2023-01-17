@@ -6,10 +6,15 @@
 #include <gbdk/platform.h>
 #include <gbdk/metasprites.h>
 
+#define sprite_ship_canopy_TILE_ORIGIN 0
+#define sprite_ship_canopy_TILE_W 8
 #define sprite_ship_canopy_TILE_H 16
 #define sprite_ship_canopy_WIDTH 8
 #define sprite_ship_canopy_HEIGHT 16
 #define sprite_ship_canopy_TILE_COUNT 4
+#define sprite_ship_canopy_PALETTE_COUNT 8
+#define sprite_ship_canopy_COLORS_PER_PALETTE 4
+#define sprite_ship_canopy_TOTAL_COLORS 32
 #define sprite_ship_canopy_PIVOT_X 0
 #define sprite_ship_canopy_PIVOT_Y 0
 #define sprite_ship_canopy_PIVOT_W 8

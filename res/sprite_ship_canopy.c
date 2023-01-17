@@ -7,39 +7,68 @@
 BANKREF(sprite_ship_canopy)
 
 const palette_color_t sprite_ship_canopy_palettes[32] = {
-	RGB8(0, 0, 0), RGB8(0, 128, 136), RGB8(0, 230, 214), RGB8(252, 252, 252),
-	RGB8(0, 0, 0), RGB8(164, 0, 0), RGB8(216, 40, 0), RGB8(0, 128, 136),
-	RGB8(0, 0, 0), RGB8(164, 0, 0), RGB8(216, 40, 0), RGB8(252, 152, 56),
-	RGB8(0, 0, 0), RGB8(0, 128, 136), RGB8(0, 148, 0), RGB8(76, 220, 72),
-	RGB8(0, 0, 0), RGB8(35, 7, 7), RGB8(164, 0, 0), RGB8(216, 40, 0),
-	RGB8(26, 22, 27), RGB8(188, 0, 188), RGB8(244, 120, 252), RGB8(252, 196, 252),
-	RGB8(12, 1, 25), RGB8(36, 24, 140), RGB8(60, 188, 252), RGB8(247, 248, 252),
-	RGB8(0, 0, 0), RGB8(168, 0, 16), RGB8(228, 0, 88), RGB8(252, 116, 96)
+	RGB8(  0,  0,  0), RGB8(  0,128,136), RGB8(  0,230,214), RGB8(252,252,252)
+	,
+	RGB8(  0,  0,  0), RGB8(164,  0,  0), RGB8(216, 40,  0), RGB8(  0,128,136)
+	,
+	RGB8(  0,  0,  0), RGB8(164,  0,  0), RGB8(216, 40,  0), RGB8(252,152, 56)
+	,
+	RGB8(  0,  0,  0), RGB8(  0,128,136), RGB8(  0,148,  0), RGB8( 76,220, 72)
+	,
+	RGB8(  0,  0,  0), RGB8( 35,  7,  7), RGB8(164,  0,  0), RGB8(216, 40,  0)
+	,
+	RGB8( 26, 22, 27), RGB8(188,  0,188), RGB8(244,120,252), RGB8(252,196,252)
+	,
+	RGB8( 12,  1, 25), RGB8( 36, 24,140), RGB8( 60,188,252), RGB8(247,248,252)
+	,
+	RGB8(  0,  0,  0), RGB8(168,  0, 16), RGB8(228,  0, 88), RGB8(252,116, 96)
+	
 };
 
 const uint8_t sprite_ship_canopy_tiles[64] = {
-	0x00,0x00,0x00,0x00,0x00,0x00,0x20,0x00,0x50,0x00,0x50,0x00,0x50,0x20,0x50,0x20,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x10,0x00,0x28,0x00,0x28,0x00,0x28,0x10,0x28,0x10,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+	0x00,0x00,0x00,0x00,
+	0x00,0x00,0x20,0x00,
+	0x50,0x00,0x50,0x00,
+	0x50,0x20,0x50,0x20,
+	0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,
+	
+0x00,0x00,0x00,0x00,
+	0x00,0x00,0x10,0x00,
+	0x28,0x00,0x28,0x00,
+	0x28,0x10,0x28,0x10,
+	0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00
+	
 };
 
 const metasprite_t sprite_ship_canopy_metasprite0[] = {
-	METASPR_ITEM(0, 0, 0, 5), METASPR_TERM
+	METASPR_ITEM(0, 0, 0, S_PAL(5)),
+	METASPR_TERM
 };
 
 const metasprite_t sprite_ship_canopy_metasprite1[] = {
-	METASPR_ITEM(0, 0, 2, 5), METASPR_TERM
+	METASPR_ITEM(0, 0, 2, S_PAL(5)),
+	METASPR_TERM
 };
 
 const metasprite_t sprite_ship_canopy_metasprite2[] = {
-	METASPR_ITEM(0, 0, 2, 5), METASPR_TERM
+	METASPR_ITEM(0, 0, 2, S_PAL(5)),
+	METASPR_TERM
 };
 
 const metasprite_t sprite_ship_canopy_metasprite3[] = {
-	METASPR_ITEM(0, 0, 2, 37), METASPR_TERM
+	METASPR_ITEM(0, 0, 2, S_PAL(5) | S_FLIPX),
+	METASPR_TERM
 };
 
 const metasprite_t sprite_ship_canopy_metasprite4[] = {
-	METASPR_ITEM(0, 0, 0, 37), METASPR_TERM
+	METASPR_ITEM(0, 0, 0, S_PAL(5) | S_FLIPX),
+	METASPR_TERM
 };
 
 const metasprite_t* const sprite_ship_canopy_metasprites[5] = {
