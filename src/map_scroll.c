@@ -9,7 +9,8 @@
 
 #include "map_scroll.h"
 
-#include "../res/nes_map.h"
+#include "../res/nesaxelay_background_map.h"
+
 
 // For now Scroll X amount needs to be +2 and init value of 1
 // so that it avoids some PPU behavior that's different when SCX % 8 = 0
@@ -29,13 +30,13 @@ uint8_t  draw_queued_map = false;
 static uint16_t draw_queue_y_row = 0;
 
 uint8_t * p_vram_dest;
-uint8_t * p_map_src;
-uint8_t * p_map_attr_src;
+uint8_t const * p_map_src;
+uint8_t const * p_map_attr_src;
 
 
 // Reset vars and draw initial map
 void map_scroll_init(void) {
-    map_y = (nes_map_height - DEVICE_SCREEN_BUFFER_HEIGHT) * 8;  // Set to bottom of map
+    map_y = nesaxelay_background_map_HEIGHT - (DEVICE_SCREEN_BUFFER_HEIGHT * 8);  // Set to bottom of map
     map_x = 0;
 
     // Reset scrolling
@@ -50,8 +51,8 @@ void map_scroll_init(void) {
 void map_scroll_redraw_all(void) {
 
     set_bkg_tiles(0, (map_y >> 3) & 0x1Fu,                           // Start Y row: Map Y downshifted to tiles, clamped to HW map buffer dimensions (32 x 32)
-                  nes_map_width, DEVICE_SCREEN_BUFFER_HEIGHT,        // Need full hardware map buffer Height due to stretching (TODO: change this to fir 18 high?)
-                  &nes_map[((map_y >> 3) & 0x7Fu) * nes_map_width]); // Map Offset: Map Y downshifted to tiles, clamped to map Height (0x80 in tiles)
+                  (nesaxelay_background_map_WIDTH >> 3), DEVICE_SCREEN_BUFFER_HEIGHT,        // Need full hardware map buffer Height due to stretching (TODO: change this to fir 18 high?)
+                  &nesaxelay_background_map_map[((map_y >> 3) & 0x7Fu) * (nesaxelay_background_map_WIDTH >> 3)]); // Map Offset: Map Y downshifted to tiles, clamped to map Height (0x80 in tiles)
 
     if (_cpu == CGB_TYPE) {
 
@@ -59,8 +60,8 @@ void map_scroll_redraw_all(void) {
         VBK_REG = 1; // Same as setting tiles above, but with tile attributes
         // set_bkg_tiles(0, 0, 32, 32, nes_map_attr);
          set_bkg_tiles(0, (map_y >> 3) & 0x1Fu,
-                       nes_map_width, DEVICE_SCREEN_BUFFER_HEIGHT,
-                       &nes_map_attr[((map_y >> 3) & 0x7Fu) * nes_map_width]);
+                       (nesaxelay_background_map_WIDTH >> 3), DEVICE_SCREEN_BUFFER_HEIGHT,
+                       &nesaxelay_background_map_map_attributes[((map_y >> 3) & 0x7Fu) * (nesaxelay_background_map_WIDTH >> 3)]);
         VBK_REG = 0; // Return to writing tile IDs
     }
 }
@@ -100,9 +101,9 @@ void map_scroll_update(void) {
             draw_queue_y_row = (map_y >> 3); // Top of HW Map Buffer
 
             p_vram_dest = (uint8_t *)0x9800 + ((draw_queue_y_row & 0x1Fu) << 5);
-            uint16_t map_offset = (draw_queue_y_row & 0x7Fu) * nes_map_width;
-            p_map_src = &nes_map[map_offset];
-            p_map_attr_src = &nes_map_attr[map_offset];
+            uint16_t map_offset = (draw_queue_y_row & 0x7Fu) * (nesaxelay_background_map_WIDTH >> 3);
+            p_map_src = &nesaxelay_background_map_map[map_offset];
+            p_map_attr_src = &nesaxelay_background_map_map_attributes[map_offset];
         }
     }
 

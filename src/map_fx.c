@@ -6,7 +6,7 @@
 #include <gb/isr.h>
 
 #include "map_scroll.h"
-#include "../res/nes_map.h"
+#include "../res/nesaxelay_background_map.h"
 
 #include "common.h"
 
@@ -204,7 +204,7 @@ void vblank_isr_map_reset (void) {
         // set_data(
         memcpy(p_vram_dest, // Y Row clamped to HW map buffer dimensions (32 x 32) then x 32 ( << 5) to get row address in vram
                p_map_src,  // Map Offset: Map Y downshifted to tiles, clamped to map Height (0x80 in tiles)
-               nes_map_width / MAP_SCROLL_CHUNK_COUNT);  // Write: 1 x row of tiles / bytes
+               (nesaxelay_background_map_WIDTH >> 3) / MAP_SCROLL_CHUNK_COUNT);  // Write: 1 x row of tiles / bytes
 
         if (_cpu == CGB_TYPE) {
             // Draw map tile colors/etc
@@ -215,15 +215,15 @@ void vblank_isr_map_reset (void) {
             // set_data(
             memcpy(p_vram_dest, // Y Row clamped to HW map buffer dimensions (32 x 32) then x 32 ( << 5) to get row address in vram
                    p_map_attr_src,  // Map Offset: Map Y downshifted to tiles, clamped to map Height (0x80 in tiles)
-                   nes_map_width / MAP_SCROLL_CHUNK_COUNT);  // Write: 1 x row of tiles / bytes
+                   (nesaxelay_background_map_WIDTH >> 3) / MAP_SCROLL_CHUNK_COUNT);  // Write: 1 x row of tiles / bytes
             VBK_REG = 0; // Return to writing tile IDs
 
-            p_map_attr_src += nes_map_width / 8;
+            p_map_attr_src += (nesaxelay_background_map_WIDTH >> 3) / 8;
         }
 
         // move to next VRAM update chunk address
-        p_vram_dest += nes_map_width / 8;
-        p_map_src += nes_map_width / 8;
+        p_vram_dest += (nesaxelay_background_map_WIDTH >> 3) / 8;
+        p_map_src += (nesaxelay_background_map_WIDTH >> 3) / 8;
         draw_queued_map--;
     }
 }

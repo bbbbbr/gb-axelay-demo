@@ -75,20 +75,21 @@ assets:
 #	tools/png2gbtiles res/nes_map.png -csource -c -f -p -pal=res/nes_map_palette.txt -var=nes res/nes.c
 #    ---> TODO: Option to enable CGB palette array by default
 #           nes_pal_cgb[]
+	$(PNG2ASSET) res/nesaxelay_background_v2_indexed.png -map -use_map_attributes -keep_palette_order -c res/nesaxelay_background_map.c
 #
 #	== Sprite conversion
 #    - use full 32 color indexed palette in Gimp, use mtpaint to fix gimps index color mangling if needed
 #  - Boulders
-	$(PNG2ASSET) res/sprite_boulders.png -sw 16 -sh 16 -px 0 -py 0 -pw 16 -ph 16 -spr8x16 -use_map_attributes -keep_palette_order -c sprite_boulders.c
+	$(PNG2ASSET) res/sprite_boulders.png -sw 16 -sh 16 -px 0 -py 0 -pw 16 -ph 16 -spr8x16 -use_map_attributes -keep_palette_order -c res/sprite_boulders.c
 #
 #  - Ship
-	$(PNG2ASSET) res/sprites_ship_nocanopy.png -sw 24 -sh 32 -px 0 -py 0 -pw 16 -ph 16  -spr8x16 -use_map_attributes -keep_palette_order -c sprite_ship.c
+	$(PNG2ASSET) res/sprites_ship_nocanopy.png -sw 24 -sh 32 -px 0 -py 0 -pw 16 -ph 16  -spr8x16 -use_map_attributes -keep_palette_order -c res/sprite_ship.c
 #
 #  - Ship Canopy
-	$(PNG2ASSET) res/sprites_ship_canopy-only_crop.png -sw 8 -sh 16 -px 0 -py 0 -pw 8 -ph 16  -spr8x16 -use_map_attributes -keep_palette_order -c sprite_ship_canopy.c
+	$(PNG2ASSET) res/sprites_ship_canopy-only_crop.png -sw 8 -sh 16 -px 0 -py 0 -pw 8 -ph 16  -spr8x16 -use_map_attributes -keep_palette_order -c res/sprite_ship_canopy.c
 #
 #  - Ship Bullets
-	$(PNG2ASSET) res/sprites_shots.png -sw 8 -sh 16 -px 0 -py 0 -pw 8 -ph 16  -spr8x16 -use_map_attributes -keep_palette_order -c sprite_shots.c
+	$(PNG2ASSET) res/sprites_shots.png -sw 8 -sh 16 -px 0 -py 0 -pw 8 -ph 16  -spr8x16 -use_map_attributes -keep_palette_order -c res/sprite_shots.c
 
 
 clean:

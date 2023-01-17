@@ -5,8 +5,8 @@
 #include <stdbool.h>
 #include <rand.h>
 
-#include "../res/nes_map.h"
-#include "../res/nes_tiles.h"
+#include "../res/nesaxelay_background_map.h"
+
 #include "../res/horizon_map.h"
 #include "../res/horizon_tiles.h"
 #include "../res/sprite_boulders.h"
@@ -28,11 +28,11 @@
 // TODO: move to gfx.x
 void init_gfx_map() {
 
-    set_bkg_data(0, nes_tiles_count, nes_tiles);
+    set_bkg_data(0, nesaxelay_background_map_TILE_COUNT, nesaxelay_background_map_tiles);
 
     if (_cpu == CGB_TYPE) {
         // Set CGB Palette
-        set_bkg_palette(0, nes_num_pals, nes_pal_cgb);
+        set_bkg_palette(0, nesaxelay_background_map_PALETTE_COUNT, nesaxelay_background_map_palettes);
     } else {
         // Set DMG palette
         BGP_REG = DMG_PALETTE(DMG_BLACK, DMG_DARK_GRAY, DMG_LITE_GRAY, DMG_WHITE);
@@ -56,7 +56,7 @@ void init_gfx_sprites() {
 
     if (_cpu == CGB_TYPE) {
         // Set CGB Palette
-        set_sprite_palette(0, nes_num_pals, nes_pal_cgb);
+        set_sprite_palette(0, nesaxelay_background_map_PALETTE_COUNT, nesaxelay_background_map_palettes);
     } else {
         // Set DMG palette (top two colors BLACK for higher contrast against background)
         OBP0_REG = DMG_PALETTE(DMG_BLACK, DMG_BLACK, DMG_LITE_GRAY, DMG_WHITE);

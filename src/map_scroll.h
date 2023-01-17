@@ -8,8 +8,8 @@ extern uint8_t  map_x_top;
 
 extern uint8_t draw_queued_map;
 extern uint8_t * p_vram_dest;
-extern uint8_t * p_map_src;
-extern uint8_t * p_map_attr_src;
+extern const uint8_t * p_map_src;
+extern const uint8_t * p_map_attr_src;
 
 #define MAP_SCROLL_CHUNK_COUNT 8
 
